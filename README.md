@@ -4,6 +4,9 @@
 
 HydroLink Plus is an IoT and AI-powered smart water metering system designed to transform traditional water management practices. Our system provides a comprehensive solution for efficient water usage monitoring, leak detection, water quality monitoring, and automated billing.
 
+> [!WARNING]
+> This project is currently in development and is not yet ready for production use. Please check back regularly for updates and changes.
+
 **Graduation Project 🎓**
 
 HydroLink Plus is our main project for graduation, developed by a team of four students from the Computer Science and Engineering department.
