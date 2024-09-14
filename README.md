@@ -1,5 +1,3 @@
-Here's an updated version of the README file with more information:
-
 # **HydroLink Plus 💧🔗**
 
 **Smart Water Metering System for a Sustainable Future 🌎**
@@ -60,10 +58,10 @@ The HydroLink Plus system consists of the following components:
 
 **Contributors 👥**
 
-- Albin K Varghese (MLM21CS020)
+- Albin K Varghese (MLM21CS020) - [LinkedIn](https://www.linkedin.com/in/albinvar/)
 - Albin Varghese (MLM21CS022)
-- Amithamol Varghese (MLM21CS027)
-- Amrutha Pradeep (MLM21CS028)
+- Amithamol Varghese (MLM21CS027) - [LinkedIn](https://www.linkedin.com/in/amithamol/)
+- Amrutha Pradeep (MLM21CS028) - [LinkedIn](https://www.linkedin.com/in/amrutha-pradeep-070893249/)
 
 **Mentor 👩‍🏫**
 
