@@ -1,92 +1,177 @@
-# **HydroLink Plus 💧🔗**
+# 🌊 HydroLink Plus – Smart Water Management System  
 
-**Smart Water Metering System for a Sustainable Future 🌎**
+**HydroLink Plus** is an IoT and AI-powered solution designed to retrofit traditional water meters into smart systems. By leveraging solar energy, advanced sensors, and AI analytics, HydroLink Plus enables real-time water monitoring, predictive maintenance, and automated billing for consumers and authorities alike.  
 
-HydroLink Plus is an IoT and AI-powered smart water metering system designed to transform traditional water management practices. Our system provides a comprehensive solution for efficient water usage monitoring, leak detection, water quality monitoring, and automated billing.
+---
 
-> [!WARNING]
-> This project is currently in development and is not yet ready for production use. Please check back regularly for updates and changes.
+## 🔗 Documentation Wiki  
 
-**Graduation Project 🎓**
+Explore the complete **HydroLink Plus Documentation** for detailed insights into setup, usage, and advanced features:  
+👉 [**HydroLink Plus Documentation Wiki**](https://github.com/your-repo/HydroLinkPlus/wiki)  
 
-HydroLink Plus is our main project for graduation, developed by a team of four students from the Computer Science and Engineering department.
+---
 
-**Monorepo Structure 🗂️**
+## 🚀 Features  
 
-This repository is a monorepo, containing all the necessary codes and files for the HydroLink Plus system. The repository is structured as follows:
+### 🌟 Key Highlights  
+- **📡 IoT-Enabled**: Real-time monitoring of water usage and quality.  
+- **🔋 Energy-Efficient**: Operates on solar power with dynamic power management.  
+- **🧠 AI-Powered**: Predicts maintenance needs using ML algorithms.  
+- **📱 User-Friendly Apps**: Authority portal and consumer mobile app for seamless interaction.  
+- **📈 Scalable**: Designed for homes, industries, and municipalities.  
 
-- ReactNative App (consumer level): `mobile-app`
-- Admin Level Dashboard (Next.js): `admin-dashboard`
-- Authority Backend (Laravel): `authority-backend`
-- ESP32 Firmware: `esp32-firmware`
-- Rest API for Data Management (Laravel): `data-management-api`
-- FastAPI (AI Features API): `ai-features-api`
-- Schematics for PCB: `pcb-schematics`
-- 3D Casing Models: `3d-casing-models`
+---
 
-**Key Features 📈**
+## 💡 Motivation  
 
-- Real-time water usage monitoring and analytics 📊
-- AI-powered predictive analytics for water consumption forecasting 🔮
-- Remote control and automation of water supply 📱
-- Automated billing and cost estimation 💸
-- Water quality monitoring and anomaly detection 🚨
-- Solar-powered operation with battery backup ☀️
-- User-friendly mobile and web interfaces 📱💻
-- Multi-user and multi-zone management 👥
-- Environmental impact tracking and sustainability features 🌟
-- Integration with smart home ecosystems and IoT devices 🏠
+Water is one of the planet's most precious resources, yet inefficiencies in its management lead to significant wastage. HydroLink Plus was conceived to:  
+- **🔍 Detect and Prevent Leaks**: Identify anomalies in real-time to prevent wastage.  
+- **📊 Empower Consumers**: Provide actionable insights to encourage responsible water usage.  
+- **🌍 Conserve Resources**: Enable authorities to optimize distribution and minimize loss.  
 
-**System Architecture 🏗️**
+---
 
-The HydroLink Plus system consists of the following components:
+## 📊 Feasibility  
 
-- **Hardware Components**:
-  - ESP32-based water metering device
-  - Solar panel and battery for power supply
-  - Water quality sensors (pH, turbidity, etc.)
-- **Software Components**:
-  - ReactNative App for consumer-level monitoring and control
-  - Admin Level Dashboard for authority-level monitoring and management
-  - Authority Backend for data management and analytics
-  - ESP32 Firmware for device-level control and data transmission
-  - Rest API for data management and integration with other systems
-  - FastAPI for AI-powered predictive analytics and anomaly detection
+### Technical Feasibility  
+- **Renewable Energy Integration**: Operates independently using solar panels, ensuring uninterrupted service.  
+- **IoT Backbone**: Uses robust communication (Wi-Fi/GSM) for data transmission.  
+- **AI/ML Capabilities**: Analyzes usage patterns for predictive maintenance and billing automation.  
 
-**Getting Started 🚀**
+### Economic Feasibility  
+- **Affordable Components**: Designed using cost-effective hardware like ESP32 and open-source software frameworks.  
+- **Scalable Design**: Suitable for individual homes, communities, and industrial facilities, ensuring economies of scale.  
 
-1. Clone the repository: `git clone https://github.com/albinvar/hydrolink-plus`
-2. Install the required dependencies: `npm install` or `pip install -r requirements.txt`
-3. Configure the system according to the documentation: [Documentation](https://github.com/albinvar/hydrolink-plus/wiki)
+---
 
-**Contributors 👥**
+## 📂 Repository Structure  
 
-- Albin K Varghese (MLM21CS020) - [LinkedIn](https://www.linkedin.com/in/albinvar/)
-- Albin Varghese (MLM21CS022)
-- Amithamol Varghese (MLM21CS027) - [LinkedIn](https://www.linkedin.com/in/amithamol/)
-- Amrutha Pradeep (MLM21CS028) - [LinkedIn](https://www.linkedin.com/in/amrutha-pradeep-070893249/)
+```plaintext
+HydroLinkPlus/
+├── hardware/
+│   ├── 3d-case/           # 3D printing files for the hardware casing
+│   ├── pcb-design/        # PCB schematics and design files
+├── firmware/
+│   ├── src/               # ESP-IDF firmware source code
+│   ├── ota-updates/       # OTA update logic and scripts
+├── software/
+│   ├── portal/            # Laravel and Next.js code for the authority portal
+│   ├── app/               # React Native consumer app code
+├── docs/                  # Documentation files
+└── README.md              # Project overview
+```
 
-**Mentor 👩‍🏫**
+---
 
-- Ms. Devi Gopal T, Assistant Professor, CSE Department
+## 🛠️ Installation  
 
-**License 📜**
+### 1. Clone the Repository  
+```bash
+git clone https://github.com/your-repo/HydroLinkPlus.git
+cd HydroLinkPlus
+```
 
-HydroLink Plus is licensed under the MIT License. See [LICENSE](https://github.com/albinvar/hydrolink-plus/blob/master/LICENSE) for more information.
+### 2. Hardware Setup  
+- Refer to the [3D Printing Case Documentation](docs/3d-printing-case.md) for assembling the case.  
+- Follow the [PCB Schematics](docs/pcb-schematics.md) for hardware connections.  
 
-**Acknowledgments 🙏**
+### 3. Firmware Installation  
+- Navigate to the `firmware/` directory:  
+  ```bash
+  cd firmware
+  idf.py build
+  idf.py flash
+  ```  
+- Refer to the [Firmware Design Documentation](docs/firmware-design.md).  
 
-We would like to thank our mentor, **Ms. Devi Gopal T**, for her guidance and support throughout the project. We also appreciate the contributions of our team members and the open-source community.
+### 4. Software Deployment  
+- Deploy the Laravel-based backend and Next.js portal by following [Authority Portal Documentation](docs/nextjs-laravel-portal.md).  
+- Run the React Native app using:  
+  ```bash
+  npm install
+  npm run android  # or npm run ios
+  ```
 
-**Contribute 🤝**
+---
 
-We welcome contributions from developers, researchers, and enthusiasts. If you're interested in contributing to HydroLink Plus, please see our [CONTRIBUTING](https://github.com/albinvar/hydrolink-plus/blob/master/CONTRIBUTING.md) guidelines.
+## 🖥️ System Architecture  
 
-**FAQs 🤔**
+### Overall System Flow  
 
-- Q: What is the purpose of the HydroLink Plus system?
-  A: The HydroLink Plus system is designed to provide a comprehensive solution for efficient water usage monitoring, leak detection, water quality monitoring, and automated billing.
-- Q: What are the key features of the HydroLink Plus system?
-  A: The key features of the HydroLink Plus system include real-time water usage monitoring and analytics, AI-powered predictive analytics for water consumption forecasting, remote control and automation of water supply, and automated billing and cost estimation.
-- Q: How can I contribute to the HydroLink Plus project?
-  A: You can contribute to the HydroLink Plus project by forking the repository, making changes, and submitting a pull request. Please see our [CONTRIBUTING](https://github.com/albinvar/hydrolink-plus/blob/master/CONTRIBUTING.md) guidelines for more information.
+```mermaid
+graph TD;
+    A[Consumer App] --> B[Authority Server]
+    B --> C[Smart Meters]
+    C -->|Sensor Data| D[Cloud Server]
+    D --> B
+    D --> E[AI/ML Models]
+    E --> F[Predictive Insights]
+```
+
+### Power Management Architecture  
+
+```mermaid
+graph TD;
+    A[Solar Panel] --> B[MPPT Charger]
+    B --> C[12V Li-ion Battery]
+    C --> D[Mini 360 Buck Converter]
+    D --> E[ESP32]
+    E --> F[Sensors]
+```
+
+---
+
+## 🔍 Key Features  
+
+### 1. **Hardware**  
+- **3D-Printed Case**: Compact, weatherproof design for outdoor deployment.  
+- **Power Management**: Solar-powered with MPPT charging and efficient battery usage.  
+
+### 2. **Firmware**  
+- **Deep Sleep Mode**: Optimizes power consumption by minimizing active time.  
+- **Over-the-Air Updates**: Enables remote firmware upgrades securely.  
+
+### 3. **Software**  
+- **Authority Portal**: Monitor meters, track alerts, and manage billing.  
+- **Consumer App**: Real-time water usage and payment interface.  
+
+### 4. **AI/ML Features**  
+- **Predictive Maintenance**: Detects anomalies and predicts sensor degradation.  
+- **Usage Forecasting**: Estimates future water needs based on historical trends.  
+
+---
+
+## 🤝 Contributors  
+
+### Core Team  
+- **Albin K Varghese** – Project Lead  
+- **Albin Varghese** – Backend Developer  
+- **Amithamol Varghese** – Frontend Developer  
+- **Amrutha Pradeep** – AI/ML Specialist  
+
+### Mentor  
+- **Ms. Devi T Gopal** – Assistant Professor  
+
+---
+
+## 📚 Resources  
+
+- **Documentation Wiki**: [Complete Project Docs](https://github.com/your-repo/HydroLinkPlus/wiki)  
+- **API Reference**: [Explore API Endpoints](docs/api-reference.md)  
+- **Database Schema**: [Database Design](docs/database-schema.md)  
+
+---
+
+## 📝 License  
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.  
+
+---
+
+## 🌟 Support  
+
+For questions, issues, or feature requests:  
+- **Contact**: support@hydrolinkplus.com  
+- **GitHub Issues**: [Submit Here](https://github.com/your-repo/HydroLinkPlus/issues)  
+
+**HydroLink Plus – Smart Water Management, Simplified. 🌍💧**
