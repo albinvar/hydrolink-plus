@@ -22,15 +22,19 @@ export const initWebSocketServer = (server) => {
       try {
         const parsedMessage = JSON.parse(message);
 
-        // Handle authentication
+        // Authenticate the device before allowing any other messages
         if (!isAuthenticated && parsedMessage.type === "authenticate") {
+          const { deviceId, secret_key } = parsedMessage.payload;
+
+          // Authenticate the device
           const isAuthenticatedDevice = await handleAuthentication(
-            parsedMessage,
+            deviceId,
+            secret_key,
             ws
           );
           if (isAuthenticatedDevice) {
             isAuthenticated = true;
-            addConnectedDevice(parsedMessage.payload.deviceId, ws);
+            addConnectedDevice(deviceId, ws);
           } else {
             ws.close();
           }

@@ -17,7 +17,12 @@ export const removeConnectedDevice = (ws) => {
   });
 };
 
-// Get the WebSocket connection for a device ID
-export const getConnectedDevice = (deviceId) => {
-  return connectedDevices.get(deviceId);
+// Get the deviceId for a WebSocket instance
+export const getConnectedDeviceId = (ws) => {
+  for (const [deviceId, connection] of connectedDevices.entries()) {
+    if (connection === ws) {
+      return deviceId;
+    }
+  }
+  return null;
 };
