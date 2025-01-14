@@ -1,4 +1,22 @@
-# 🌊 HydroLink Plus – Smart Water Management System  
+
+
+<p align="center">
+  <img src="https://i.ibb.co/d7pdq2g/Untitled-design-1.png" alt="HydroLink Plus Logo" width="300"/>
+  <h2 align="center"> 🌊 HydroLink Plus – Smart Water Management System  </h2>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/IoT%20Enabled-blue?style=for-the-badge" alt="IoT Badge"/>
+  <img src="https://img.shields.io/badge/AI%20Powered-green?style=for-the-badge" alt="AI Badge"/>
+  <img src="https://img.shields.io/badge/Solar%20Powered-yellow?style=for-the-badge" alt="Solar Badge"/>
+  <img src="https://img.shields.io/badge/Scalable%20Design-orange?style=for-the-badge" alt="Scalable Badge"/>
+  <img src="https://img.shields.io/badge/Real-time%20Monitoring-red?style=for-the-badge" alt="Real-time Monitoring Badge"/>
+  <img src="https://img.shields.io/badge/Automation-lightgrey?style=for-the-badge" alt="Automation Badge"/>
+</p>
+
+> [!WARNING]  
+> This project is currently under development. Some features are in progress and may not be fully functional.
+
 
 **HydroLink Plus** is an IoT and AI-powered solution designed to retrofit traditional water meters into smart systems. By leveraging solar energy, advanced sensors, and AI analytics, HydroLink Plus enables real-time water monitoring, predictive maintenance, and automated billing for consumers and authorities alike.  
 
