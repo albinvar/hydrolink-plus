@@ -5,4 +5,6 @@ idf_component_register(
                   esp_netif         # Network interface dependency
                   nvs_flash         # NVS dependency
                   api               # Add API component dependency
+                    parson            # Add Parson component dependency
+                    websocket         # Add WebSocket component dependency
 )

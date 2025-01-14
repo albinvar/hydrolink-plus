@@ -4,6 +4,7 @@
 #include "nvs_flash.h"
 #include "wifi_manager.h" // Custom Wi-Fi manager we'll implement
 #include "api.h"          // Your HTTP server API
+#include "websocket.h"
 
 static const char *TAG = "MAIN";
 
@@ -21,5 +22,12 @@ void app_main(void) {
     // Start the API server
     start_api_server();
 
+    
+
     ESP_LOGI(TAG, "API server is running. You can send requests now.");
+
+    // Initialize WebSocket
+    websocket_init();
+
+    ESP_LOGI(TAG, "WebSocket client is running.");
 }
