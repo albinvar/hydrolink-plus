@@ -5,6 +5,71 @@ const router = express.Router();
 
 /**
  * @swagger
+ * tags:
+ *   name: WebSocket
+ *   description: WebSocket interactions for real-time communication
+ *
+ * components:
+ *   schemas:
+ *     RegisterMessage:
+ *       type: object
+ *       properties:
+ *         type:
+ *           type: string
+ *           description: Message type
+ *           example: register
+ *         payload:
+ *           type: object
+ *           properties:
+ *             deviceId:
+ *               type: string
+ *               description: Unique identifier for the device
+ *               example: device001
+ *     SensorDataMessage:
+ *       type: object
+ *       properties:
+ *         type:
+ *           type: string
+ *           description: Message type
+ *           example: sensor_data
+ *         payload:
+ *           type: object
+ *           properties:
+ *             deviceId:
+ *               type: string
+ *               description: Unique identifier for the device
+ *               example: device001
+ *             temperature:
+ *               type: number
+ *               description: Temperature reading from the device
+ *               example: 25.5
+ *             flowRate:
+ *               type: number
+ *               description: Water flow rate
+ *               example: 3.2
+ */
+
+/**
+ * @swagger
+ * /api/websocket:
+ *   get:
+ *     tags: [WebSocket]
+ *     summary: WebSocket server information
+ *     description: |
+ *       The WebSocket server is available at `ws://localhost:8080/`.
+ *       Use the following message types to interact with the server:
+ *       - **RegisterMessage**: Register a device.
+ *       - **SensorDataMessage**: Send sensor data from a device.
+ *     responses:
+ *       200:
+ *         description: Documentation for WebSocket server
+ */
+router.get("/websocket", (req, res) => {
+  res.send("WebSocket server available at ws://" + req.headers.host);
+});
+
+/**
+ * @swagger
  * /api/devices:
  *   get:
  *     summary: Retrieve all registered devices

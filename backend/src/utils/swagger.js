@@ -23,7 +23,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ["./src/routes/*.js"], // Path to API annotations
+  apis: ["./src/routes/*.js"], // Path to REST API annotations
 };
 
 const swaggerSpec = swaggerJsDoc(swaggerOptions);
