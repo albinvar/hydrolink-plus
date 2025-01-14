@@ -1,4 +1,6 @@
 import { WebSocketServer } from "ws";
+import crypto from "crypto";
+import { verifyDeviceSecretKey } from "./supabase.js"; // Import the verification function from Supabase service
 
 // A map to track connected devices by device ID
 const connectedDevices = new Map();
@@ -11,10 +13,40 @@ export const initWebSocketServer = (server) => {
   wss.on("connection", (ws, req) => {
     console.log("New WebSocket connection.");
 
+    let isAuthenticated = false;
+
     // Handle incoming messages
-    ws.on("message", (message) => {
+    ws.on("message", async (message) => {
       try {
         const parsedMessage = JSON.parse(message);
+
+        // Authenticate the device before allowing any other messages
+        if (!isAuthenticated && parsedMessage.type === "authenticate") {
+          const { deviceId, secret_key } = parsedMessage.payload;
+
+          // Verify the device secret_key
+          const isValid = await verifyDeviceSecretKey(deviceId, secret_key);
+          if (isValid) {
+            console.log(`Device authenticated: ${deviceId}`);
+            connectedDevices.set(deviceId, ws);
+            isAuthenticated = true;
+            ws.send(JSON.stringify({ type: "auth_ack", success: true }));
+          } else {
+            console.warn(`Authentication failed for device: ${deviceId}`);
+            ws.send(JSON.stringify({ type: "auth_ack", success: false }));
+            ws.close(); // Close connection on failed authentication
+          }
+          return;
+        }
+
+        // Reject unauthorized connections
+        if (!isAuthenticated) {
+          ws.send(JSON.stringify({ type: "error", message: "Unauthorized" }));
+          ws.close();
+          return;
+        }
+
+        // Handle authenticated messages
         handleWebSocketMessage(ws, parsedMessage);
       } catch (error) {
         console.error("Invalid WebSocket message:", error.message);
@@ -27,7 +59,6 @@ export const initWebSocketServer = (server) => {
     // Handle connection close
     ws.on("close", () => {
       console.log("WebSocket connection closed.");
-      // Remove device from connected devices map
       connectedDevices.forEach((value, key) => {
         if (value === ws) connectedDevices.delete(key);
       });
@@ -45,29 +76,6 @@ export const initWebSocketServer = (server) => {
 // Handle WebSocket messages
 const handleWebSocketMessage = (ws, message) => {
   switch (message.type) {
-    case "register": {
-      const { deviceId } = message.payload;
-      if (deviceId) {
-        connectedDevices.set(deviceId, ws);
-        console.log(`Device registered: ${deviceId}`);
-        ws.send(
-          JSON.stringify({
-            type: "register_ack",
-            success: true,
-            message: `Device ${deviceId} registered successfully`,
-          })
-        );
-      } else {
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            message: "Missing deviceId in registration",
-          })
-        );
-      }
-      break;
-    }
-
     case "sensor_data": {
       const { deviceId, temperature, flowRate } = message.payload;
       console.log(

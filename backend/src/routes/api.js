@@ -115,18 +115,34 @@ router.get("/devices", async (req, res) => {
  *             properties:
  *               device_id:
  *                 type: string
- *               secret_key:
- *                 type: string
+ *                 example: HLP001
  *     responses:
  *       201:
  *         description: Device added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     device_id:
+ *                       type: string
+ *                       example: HLP001
+ *                     key:
+ *                       type: string
+ *                       example: a1b2c3d4e5f6g7h8
  *       400:
  *         description: Bad request
  */
 router.post("/devices", async (req, res) => {
   try {
-    const { device_id, secret_key } = req.body;
-    const result = await addDevice(device_id, secret_key);
+    const { device_id } = req.body;
+    const result = await addDevice(device_id);
     res.status(201).json(result);
   } catch (error) {
     console.error("Error adding device:", error);
