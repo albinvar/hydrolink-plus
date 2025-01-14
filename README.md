@@ -6,12 +6,12 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/IoT%20Enabled-blue?style=for-the-badge" alt="IoT Badge"/>
-  <img src="https://img.shields.io/badge/AI%20Powered-green?style=for-the-badge" alt="AI Badge"/>
-  <img src="https://img.shields.io/badge/Solar%20Powered-yellow?style=for-the-badge" alt="Solar Badge"/>
-  <img src="https://img.shields.io/badge/Scalable%20Design-orange?style=for-the-badge" alt="Scalable Badge"/>
-  <img src="https://img.shields.io/badge/Real-time%20Monitoring-red?style=for-the-badge" alt="Real-time Monitoring Badge"/>
-  <img src="https://img.shields.io/badge/Automation-lightgrey?style=for-the-badge" alt="Automation Badge"/>
+  <img src="https://img.shields.io/badge/IoT%20Enabled-blue" alt="IoT Badge"/>
+  <img src="https://img.shields.io/badge/AI%20Powered-green" alt="AI Badge"/>
+  <img src="https://img.shields.io/badge/Solar%20Powered-yellow" alt="Solar Badge"/>
+  <img src="https://img.shields.io/badge/Scalable%20Design-orange" alt="Scalable Badge"/>
+  <img src="https://img.shields.io/badge/Real-time%20Monitoring-red" alt="Real-time Monitoring Badge"/>
+  <img src="https://img.shields.io/badge/Automation-green" alt="Automation Badge"/>
 </p>
 
 > [!WARNING]  
@@ -25,7 +25,7 @@
 ## 🔗 Documentation Wiki  
 
 Explore the complete **HydroLink Plus Documentation** for detailed insights into setup, usage, and advanced features:  
-👉 [**HydroLink Plus Documentation Wiki**](https://github.com/your-repo/HydroLinkPlus/wiki)  
+👉 [**HydroLink Plus Documentation Wiki**](https://github.com/albinvar/hydrolink-plus/wiki)  
 
 ---
 
