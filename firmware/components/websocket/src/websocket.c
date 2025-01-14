@@ -12,6 +12,7 @@ static const char *TAG = "WEBSOCKET";
 
 static esp_websocket_client_handle_t client = NULL;
 static bool keep_running = true;
+static bool is_authenticated = false; // Authentication state
 
 static void websocket_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     esp_websocket_event_data_t *data = (esp_websocket_event_data_t *)event_data;
@@ -19,29 +20,32 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
     switch (event_id) {
         case WEBSOCKET_EVENT_CONNECTED:
             ESP_LOGI(TAG, "WebSocket connected.");
+            
+            // Send authentication only if not already authenticated
+            if (!is_authenticated) {
+                JSON_Value *root_value = json_value_init_object();
+                JSON_Object *root_object = json_value_get_object(root_value);
 
-            // Create JSON payload
-            JSON_Value *root_value = json_value_init_object();
-            JSON_Object *root_object = json_value_get_object(root_value);
+                json_object_set_string(root_object, "type", "authenticate");
+                JSON_Value *payload_value = json_value_init_object();
+                JSON_Object *payload_object = json_value_get_object(payload_value);
 
-            json_object_set_string(root_object, "type", "authenticate");
-            JSON_Value *payload_value = json_value_init_object();
-            JSON_Object *payload_object = json_value_get_object(payload_value);
+                json_object_set_string(payload_object, "deviceId", DEVICE_ID);
+                json_object_set_string(payload_object, "secret_key", SECRET_KEY);
+                json_object_set_value(root_object, "payload", payload_value);
 
-            json_object_set_string(payload_object, "deviceId", DEVICE_ID);
-            json_object_set_string(payload_object, "secret_key", SECRET_KEY);
-            json_object_set_value(root_object, "payload", payload_value);
+                char *auth_message = json_serialize_to_string(root_value);
+                esp_websocket_client_send_text(client, auth_message, strlen(auth_message), portMAX_DELAY);
 
-            char *auth_message = json_serialize_to_string(root_value);
-            esp_websocket_client_send_text(client, auth_message, strlen(auth_message), portMAX_DELAY);
-
-            json_free_serialized_string(auth_message);
-            json_value_free(root_value);
+                json_free_serialized_string(auth_message);
+                json_value_free(root_value);
+            }
 
             break;
 
         case WEBSOCKET_EVENT_DISCONNECTED:
             ESP_LOGW(TAG, "WebSocket disconnected.");
+            is_authenticated = false; // Reset authentication state on disconnect
             break;
 
         case WEBSOCKET_EVENT_DATA:
@@ -61,6 +65,7 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
                         esp_websocket_client_stop(client);
                     } else {
                         ESP_LOGI(TAG, "Authentication succeeded.");
+                        is_authenticated = true; // Mark as authenticated
                     }
                 }
                 json_value_free(response_value);
@@ -90,6 +95,7 @@ void websocket_init(void) {
     while (keep_running) {
         if (!esp_websocket_client_is_connected(client)) {
             ESP_LOGW(TAG, "WebSocket disconnected. Retrying in 10 seconds...");
+            is_authenticated = false; // Reset authentication state
             vTaskDelay(pdMS_TO_TICKS(10000));  // Wait 10 seconds before retrying
             esp_websocket_client_start(client);
         }
