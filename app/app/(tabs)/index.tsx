@@ -1,78 +1,140 @@
-import { Image, StyleSheet, Platform } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { HelloWave } from "@/components/HelloWave";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+export default function SplashScreen({ navigation }) {
+  // Generate an array of Animated.Values for independent star blinking
+  const starAnimations = Array.from(
+    { length: 20 },
+    () => useRef(new Animated.Value(0)).current
+  );
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/partial-react-logo.png")}
-          style={styles.reactLogo}
+  // Start animations for each star independently
+  useEffect(() => {
+    starAnimations.forEach((anim) => {
+      const loopAnimation = () => {
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: Math.random() * 1500 + 500, // Random duration between 500ms and 2000ms
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: Math.random() * 1500 + 500, // Random duration between 500ms and 2000ms
+            useNativeDriver: true,
+          }),
+        ]).start(() => loopAnimation()); // Loop the animation
+      };
+      // Start animation with a random initial delay
+      setTimeout(loopAnimation, Math.random() * 2000);
+    });
+  }, [starAnimations]);
+
+  // Generate random stars
+  const renderStars = () => {
+    return starAnimations.map((anim, index) => {
+      const randomLeft = Math.random() * 100 + "%";
+      const randomTop = Math.random() * 100 + "%";
+      const randomSize = Math.random() * 4 + 2;
+
+      return (
+        <Animated.View
+          key={index}
+          style={[
+            styles.star,
+            {
+              left: randomLeft,
+              top: randomTop,
+              width: randomSize,
+              height: randomSize,
+              opacity: anim, // Bind opacity to the animation
+            },
+          ]}
         />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: "cmd + d",
-              android: "cmd + m",
-              web: "F12",
-            })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this
-          starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{" "}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText>{" "}
-          to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{" "}
-          directory. This will move the current{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      );
+    });
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Stars */}
+      {renderStars()}
+
+      {/* Water droplet icon */}
+      <MaterialCommunityIcons name="water" size={100} color="#4FC3F7" />
+      {/* App title */}
+      <Text style={styles.title}>HydroLink Plus</Text>
+      {/* Tagline */}
+      <Text style={styles.tagline}>Smart Water Management Simplified</Text>
+
+      {/* Login button */}
+      <TouchableOpacity
+        style={[styles.button, styles.loginButton]}
+        onPress={() => navigation.navigate("Login")}
+      >
+        <Text style={styles.buttonText}>Login</Text>
+      </TouchableOpacity>
+
+      {/* Sign Up button */}
+      <TouchableOpacity
+        style={[styles.button, styles.signupButton]}
+        onPress={() => navigation.navigate("SignUp")}
+      >
+        <Text style={styles.buttonText}>Sign Up</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: "row",
+  container: {
+    flex: 1,
+    backgroundColor: "#121212", // Dark background
+    justifyContent: "center",
     alignItems: "center",
-    gap: 8,
+    position: "relative",
+    overflow: "hidden",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 32,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    marginTop: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  tagline: {
+    fontSize: 16,
+    color: "#B0BEC5",
+    marginVertical: 10,
+    textAlign: "center",
+  },
+  button: {
+    width: "80%",
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 15,
+    alignItems: "center",
+  },
+  loginButton: {
+    backgroundColor: "#4FC3F7", // Light blue
+  },
+  signupButton: {
+    backgroundColor: "#1E88E5", // Slightly darker blue
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  star: {
     position: "absolute",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 50,
   },
 });
