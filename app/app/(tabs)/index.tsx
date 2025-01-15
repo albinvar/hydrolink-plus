@@ -7,37 +7,35 @@ import {
   Animated,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router"; // Use useRouter from expo-router
 
-export default function SplashScreen({ navigation }) {
-  // Generate an array of Animated.Values for independent star blinking
+export default function SplashScreen() {
+  const router = useRouter(); // Access router instead of navigation
   const starAnimations = Array.from(
     { length: 20 },
     () => useRef(new Animated.Value(0)).current
   );
 
-  // Start animations for each star independently
   useEffect(() => {
     starAnimations.forEach((anim) => {
       const loopAnimation = () => {
         Animated.sequence([
           Animated.timing(anim, {
             toValue: 1,
-            duration: Math.random() * 1500 + 500, // Random duration between 500ms and 2000ms
+            duration: Math.random() * 1500 + 500,
             useNativeDriver: true,
           }),
           Animated.timing(anim, {
             toValue: 0,
-            duration: Math.random() * 1500 + 500, // Random duration between 500ms and 2000ms
+            duration: Math.random() * 1500 + 500,
             useNativeDriver: true,
           }),
-        ]).start(() => loopAnimation()); // Loop the animation
+        ]).start(() => loopAnimation());
       };
-      // Start animation with a random initial delay
       setTimeout(loopAnimation, Math.random() * 2000);
     });
   }, [starAnimations]);
 
-  // Generate random stars
   const renderStars = () => {
     return starAnimations.map((anim, index) => {
       const randomLeft = Math.random() * 100 + "%";
@@ -54,7 +52,7 @@ export default function SplashScreen({ navigation }) {
               top: randomTop,
               width: randomSize,
               height: randomSize,
-              opacity: anim, // Bind opacity to the animation
+              opacity: anim,
             },
           ]}
         />
@@ -64,28 +62,19 @@ export default function SplashScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Stars */}
       {renderStars()}
-
-      {/* Water droplet icon */}
       <MaterialCommunityIcons name="water" size={100} color="#4FC3F7" />
-      {/* App title */}
       <Text style={styles.title}>HydroLink Plus</Text>
-      {/* Tagline */}
       <Text style={styles.tagline}>Smart Water Management Simplified</Text>
-
-      {/* Login button */}
       <TouchableOpacity
         style={[styles.button, styles.loginButton]}
-        onPress={() => navigation.navigate("Login")}
+        onPress={() => router.push("login")} // Navigate using router
       >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
-
-      {/* Sign Up button */}
       <TouchableOpacity
         style={[styles.button, styles.signupButton]}
-        onPress={() => navigation.navigate("SignUp")}
+        onPress={() => router.push("signup")} // Navigate using router
       >
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
@@ -96,7 +85,7 @@ export default function SplashScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#121212", // Dark background
+    backgroundColor: "#121212",
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
@@ -122,10 +111,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loginButton: {
-    backgroundColor: "#4FC3F7", // Light blue
+    backgroundColor: "#4FC3F7",
   },
   signupButton: {
-    backgroundColor: "#1E88E5", // Slightly darker blue
+    backgroundColor: "#1E88E5",
   },
   buttonText: {
     color: "#FFFFFF",
