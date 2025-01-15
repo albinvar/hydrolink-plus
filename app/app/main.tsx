@@ -147,10 +147,7 @@ export default function LoginScreen() {
       </Animated.View>
 
       {/* Login button */}
-      <Animated.View
-        entering={FadeInUp.delay(1200)}
-        style={styles.buttonWrapper}
-      >
+      <Animated.View entering={FadeInUp.delay(1200)}>
         <TouchableOpacity
           style={styles.button}
           onPress={handleLogin}
@@ -233,14 +230,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 10,
   },
-  buttonWrapper: {
-    width: "100%",
-    maxWidth: 400, // Same as input fields
-    marginTop: 10,
-  },
   button: {
     backgroundColor: "#4FC3F7",
     width: "100%",
+    maxWidth: 400,
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
