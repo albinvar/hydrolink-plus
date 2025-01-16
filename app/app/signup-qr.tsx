@@ -9,11 +9,13 @@ import {
 } from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const windowWidth = Dimensions.get("window").width;
 
 export default function SignupQR() {
   const [facing, setFacing] = useState<CameraType>("back");
+  const [torchEnabled, setTorchEnabled] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const router = useRouter();
 
@@ -39,9 +41,13 @@ export default function SignupQR() {
 
   // Handle QR Code Scanned
   const handleQRCodeScanned = (data: string) => {
-    Alert.alert("QR Code Scanned", `Meter ID: ${data}`, [
-      { text: "OK", onPress: () => router.push("main") },
-    ]);
+    if (data.startsWith("hlp-met-")) {
+      Alert.alert("QR Code Scanned", `Meter ID: ${data}`, [
+        { text: "OK", onPress: () => router.push("main") },
+      ]);
+    } else {
+      Alert.alert("Invalid QR Code", "This QR code is not valid for linking.");
+    }
   };
 
   return (
@@ -51,11 +57,23 @@ export default function SignupQR() {
         <CameraView
           style={styles.camera}
           facing={facing}
+          enableTorch={torchEnabled}
           onBarcodeScanned={({ data }) => handleQRCodeScanned(data)}
           barcodeScannerSettings={{
             barcodeTypes: ["qr"],
           }}
         />
+        {/* Torch Icon */}
+        <TouchableOpacity
+          style={styles.torchButton}
+          onPress={() => setTorchEnabled(!torchEnabled)}
+        >
+          <MaterialCommunityIcons
+            name={torchEnabled ? "flashlight-off" : "flashlight"}
+            size={28}
+            color="#FFFFFF"
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Instructions */}
@@ -111,9 +129,18 @@ const styles = StyleSheet.create({
     overflow: "hidden", // Ensure camera view is clipped to rounded corners
     borderWidth: 2,
     borderColor: "#4FC3F7",
+    position: "relative",
   },
   camera: {
     flex: 1,
+  },
+  torchButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderRadius: 20,
+    padding: 10,
   },
   instructionsContainer: {
     flex: 1,
