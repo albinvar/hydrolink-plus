@@ -11,6 +11,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
+import StarBackground from "../components/starBackground";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -87,6 +88,8 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Background animation */}
+      <StarBackground />
       {/* Animated background icon */}
       <Animated.View entering={FadeInDown.delay(200)}>
         <MaterialCommunityIcons name="water" size={100} color="#4FC3F7" />

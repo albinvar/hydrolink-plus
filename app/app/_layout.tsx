@@ -43,6 +43,11 @@ export default function RootLayout() {
           name="signup"
           options={{ title: "Sign Up", headerShown: true }}
         />
+        {/* Sign-Up QR screen */}
+        <Stack.Screen
+          name="signup-qr"
+          options={{ title: "Scan QR", headerShown: true }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
