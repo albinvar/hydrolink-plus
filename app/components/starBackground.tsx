@@ -29,8 +29,8 @@ export default function StarBackground() {
 
   const renderStars = () => {
     return starAnimations.map((anim, index) => {
-      const randomLeft = Math.random() * 100 + "%";
-      const randomTop = Math.random() * 100 + "%";
+      const randomLeft = Math.random() * 100;
+      const randomTop = Math.random() * 100;
       const randomSize = Math.random() * 4 + 2;
 
       return (
@@ -39,8 +39,8 @@ export default function StarBackground() {
           style={[
             styles.star,
             {
-              left: randomLeft,
-              top: randomTop,
+              left: `${randomLeft}%`,
+              top: `${randomTop}%`,
               width: randomSize,
               height: randomSize,
               opacity: anim,

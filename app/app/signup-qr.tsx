@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  Alert,
 } from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
@@ -16,6 +15,7 @@ const windowWidth = Dimensions.get("window").width;
 export default function SignupQR() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [torchEnabled, setTorchEnabled] = useState(false);
+  const [isScanning, setIsScanning] = useState(true);
   const [permission, requestPermission] = useCameraPermissions();
   const router = useRouter();
 
@@ -41,12 +41,15 @@ export default function SignupQR() {
 
   // Handle QR Code Scanned
   const handleQRCodeScanned = (data: string) => {
+    if (!isScanning) return; // Prevent duplicate scans
+
     if (data.startsWith("hlp-met-")) {
-      Alert.alert("QR Code Scanned", `Meter ID: ${data}`, [
-        { text: "OK", onPress: () => router.push("main") },
-      ]);
+      setIsScanning(false); // Stop scanning
+      router.push({ pathname: "/linking-process", params: { meterId: data } }); // Navigate to linking page with the meter ID
     } else {
-      Alert.alert("Invalid QR Code", "This QR code is not valid for linking.");
+      setIsScanning(false); // Stop scanning temporarily
+      alert("Invalid QR Code: This is not a valid HydroLink Plus meter.");
+      setTimeout(() => setIsScanning(true), 2000); // Resume scanning after 2 seconds
     }
   };
 
@@ -58,7 +61,7 @@ export default function SignupQR() {
           style={styles.camera}
           facing={facing}
           enableTorch={torchEnabled}
-          onBarcodeScanned={({ data }) => handleQRCodeScanned(data)}
+          onBarcodeScanned={({ data }) => handleQRCodeScanned(data)} // Updated scanning logic
           barcodeScannerSettings={{
             barcodeTypes: ["qr"],
           }}

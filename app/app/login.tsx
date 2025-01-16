@@ -68,7 +68,7 @@ export default function LoginScreen() {
 
         // Navigate to the main page after a short delay
         setTimeout(() => {
-          router.push("main");
+          router.push("/main");
         }, 1500);
       } else {
         setAlert({
@@ -169,7 +169,7 @@ export default function LoginScreen() {
 
       {/* Sign-Up link */}
       <Animated.View entering={FadeInUp.delay(1400)}>
-        <TouchableOpacity onPress={() => router.push("signup")}>
+        <TouchableOpacity onPress={() => router.push("/signup")}>
           <Text style={styles.linkText}>Don’t have an account? Sign Up</Text>
         </TouchableOpacity>
       </Animated.View>

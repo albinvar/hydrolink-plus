@@ -48,6 +48,11 @@ export default function RootLayout() {
           name="signup-qr"
           options={{ title: "Scan QR", headerShown: true }}
         />
+        {/* Linking Process screen */}
+        <Stack.Screen
+          name="linking-process"
+          options={{ title: "Linking Process", headerShown: true }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

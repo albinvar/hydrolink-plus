@@ -63,7 +63,7 @@ export default function SignupScreen() {
       setTimeout(() => {
         setIsLoading(false);
         alert("User Registered Successfully!");
-        router.push("signup-qr"); // Navigate to QR scanning page
+        router.push("/signup-qr"); // Navigate to QR scanning page
       }, 2000);
     } catch (error) {
       alert("Something went wrong. Please try again.");

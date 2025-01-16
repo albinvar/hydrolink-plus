@@ -38,8 +38,8 @@ export default function SplashScreen() {
 
   const renderStars = () => {
     return starAnimations.map((anim, index) => {
-      const randomLeft = Math.random() * 100 + "%";
-      const randomTop = Math.random() * 100 + "%";
+      const randomLeft = Math.random() * 100;
+      const randomTop = Math.random() * 100;
       const randomSize = Math.random() * 4 + 2;
 
       return (
@@ -48,8 +48,8 @@ export default function SplashScreen() {
           style={[
             styles.star,
             {
-              left: randomLeft,
-              top: randomTop,
+              left: `${randomLeft}%`,
+              top: `${randomTop}%`,
               width: randomSize,
               height: randomSize,
               opacity: anim,
@@ -68,13 +68,13 @@ export default function SplashScreen() {
       <Text style={styles.tagline}>Smart Water Management Simplified</Text>
       <TouchableOpacity
         style={[styles.button, styles.loginButton]}
-        onPress={() => router.push("login")} // Navigate using router
+        onPress={() => router.push("/login")} // Navigate using router
       >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button, styles.signupButton]}
-        onPress={() => router.push("signup")} // Navigate using router
+        onPress={() => router.push("/signup")} // Navigate using router
       >
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
