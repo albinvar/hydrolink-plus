@@ -53,6 +53,11 @@ export default function RootLayout() {
           name="linking-process"
           options={{ title: "Linking Process", headerShown: true }}
         />
+        {/* Main screen */}
+        <Stack.Screen
+          name="main"
+          options={{ title: "Main", headerShown: true }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
