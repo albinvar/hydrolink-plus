@@ -15,7 +15,6 @@ const windowWidth = Dimensions.get("window").width;
 export default function SignupQR() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
-  const [isScanning, setIsScanning] = useState(true);
   const router = useRouter();
 
   if (!permission) {
@@ -40,7 +39,6 @@ export default function SignupQR() {
 
   // Handle QR Code Scanned
   const handleQRCodeScanned = (data: string) => {
-    setIsScanning(false);
     Alert.alert("QR Code Scanned", `Meter ID: ${data}`, [
       { text: "OK", onPress: () => router.push("main") },
     ]);
@@ -53,12 +51,10 @@ export default function SignupQR() {
         <CameraView
           style={styles.camera}
           facing={facing}
-          onScan={(result) => {
-            if (isScanning && result) {
-              handleQRCodeScanned(result.data);
-            }
+          onBarcodeScanned={({ data }) => handleQRCodeScanned(data)}
+          barcodeScannerSettings={{
+            barcodeTypes: ["qr"],
           }}
-          scanTypes={["qr"]}
         />
       </View>
 
