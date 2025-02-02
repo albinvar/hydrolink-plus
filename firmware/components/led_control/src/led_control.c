@@ -1,18 +1,12 @@
+#include "led_control.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/gpio.h"
 #include "esp_log.h"
 
-#define LED_GPIO_PIN 2  // Define the GPIO pin for the built-in LED
+#define LED_GPIO_PIN 2  // Built-in LED pin
 
 static const char *TAG = "LED_MODULE";
-
-typedef enum {
-    LED_STATUS_WIFI_DISCONNECTED,
-    LED_STATUS_WS_DISCONNECTED,
-    LED_STATUS_CONNECTED
-} led_status_t;
-
 static led_status_t current_status = LED_STATUS_WIFI_DISCONNECTED;
 static bool keep_running = true;
 
@@ -20,7 +14,7 @@ static void led_task(void *arg) {
     while (keep_running) {
         switch (current_status) {
             case LED_STATUS_WIFI_DISCONNECTED:
-                ESP_LOGI(TAG, "LED: Wi-Fi Disconnected - Blink every 3 seconds");
+                ESP_LOGI(TAG, "LED: Wi-Fi Disconnected - Blinking every 3 sec");
                 gpio_set_level(LED_GPIO_PIN, 1);
                 vTaskDelay(pdMS_TO_TICKS(500));
                 gpio_set_level(LED_GPIO_PIN, 0);
@@ -28,7 +22,7 @@ static void led_task(void *arg) {
                 break;
 
             case LED_STATUS_WS_DISCONNECTED:
-                ESP_LOGI(TAG, "LED: WebSocket Disconnected - Two blinks every 1.5 seconds");
+                ESP_LOGI(TAG, "LED: WebSocket Disconnected - Two blinks every 1.5 sec");
                 for (int i = 0; i < 2; i++) {
                     gpio_set_level(LED_GPIO_PIN, 1);
                     vTaskDelay(pdMS_TO_TICKS(250));
@@ -39,9 +33,9 @@ static void led_task(void *arg) {
                 break;
 
             case LED_STATUS_CONNECTED:
-                ESP_LOGI(TAG, "LED: Connected - Light stays ON");
+                ESP_LOGI(TAG, "LED: Connected - Solid ON");
                 gpio_set_level(LED_GPIO_PIN, 1);
-                vTaskDelay(pdMS_TO_TICKS(1000));  // Add a small delay to avoid high CPU usage
+                vTaskDelay(pdMS_TO_TICKS(1000));
                 break;
 
             default:
@@ -62,7 +56,6 @@ void led_init(void) {
     };
     gpio_config(&io_conf);
 
-    // Start the LED task
     xTaskCreate(led_task, "led_task", 2048, NULL, 5, NULL);
 }
 
