@@ -1,5 +1,6 @@
 import express from "express";
 import { getDevices, addDevice } from "../services/supabase.js";
+import { getActiveConnections } from "../services/connectedDevices.js";
 
 const router = express.Router();
 
@@ -147,6 +148,36 @@ router.post("/devices", async (req, res) => {
   } catch (error) {
     console.error("Error adding device:", error);
     res.status(500).json({ error: "Failed to add device." });
+  }
+});
+
+/**
+ * @swagger
+ * /api/websockets/active:
+ *   get:
+ *     summary: List all active WebSocket connections
+ *     description: Returns a list of currently connected devices.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved active WebSocket connections.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 active_connections:
+ *                   type: array
+ *                   example: ["HLP001", "HLP002"]
+ */
+router.get("/websockets/active", (req, res) => {
+  try {
+    const activeConnections = getActiveConnections();
+    res.json({ active_connections: activeConnections });
+  } catch (error) {
+    console.error("Error fetching active WebSocket connections:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch active WebSocket connections." });
   }
 });
 
