@@ -62,3 +62,17 @@ export const getActiveConnectionsDetails = () => {
     lastActive: new Date(device.lastActive).toISOString(),
   }));
 };
+
+/**
+ * Get the device ID associated with a WebSocket instance
+ * @param {WebSocket} ws - WebSocket connection instance
+ * @returns {string|null} - Device ID or null if not found
+ */
+export const getConnectedDeviceId = (ws) => {
+  for (const [deviceId, device] of connectedDevices.entries()) {
+    if (device.ws === ws) {
+      return deviceId;
+    }
+  }
+  return null;
+};

@@ -6,11 +6,9 @@ import {
 import {
   addConnectedDevice,
   removeConnectedDevice,
-  markDeviceAlive,
 } from "./connectedDevices.js";
 
-const PING_INTERVAL = 30000; // Send a ping every 30 seconds
-const PING_TIMEOUT = 2 * PING_INTERVAL; // 60 seconds timeout for missing pong
+const PING_INTERVAL = 30000; // Send heartbeat request every 30 seconds
 
 export const initWebSocketServer = (server) => {
   const wss = new WebSocketServer({ server });
@@ -19,17 +17,13 @@ export const initWebSocketServer = (server) => {
 
   wss.on("connection", (ws) => {
     console.log("New WebSocket connection.");
-
+    ws.isAlive = true; // ✅ Mark connection as alive immediately
     let isAuthenticated = false;
 
-    ws.isAlive = true;
-
-    // Handle incoming messages
     ws.on("message", async (message) => {
       try {
         const parsedMessage = JSON.parse(message);
 
-        // Authenticate the device
         if (!isAuthenticated && parsedMessage.type === "authenticate") {
           const { deviceId, secret_key } = parsedMessage.payload;
 
@@ -40,6 +34,7 @@ export const initWebSocketServer = (server) => {
           );
           if (isAuthenticatedDevice) {
             isAuthenticated = true;
+            ws.deviceId = deviceId;
             addConnectedDevice(deviceId, ws);
           } else {
             ws.close();
@@ -47,50 +42,45 @@ export const initWebSocketServer = (server) => {
           return;
         }
 
-        // Mark the device as alive if it responds
-        markDeviceAlive(ws);
-
-        // Reject unauthorized connections
-        if (!isAuthenticated) {
-          ws.send(JSON.stringify({ type: "error", message: "Unauthorized" }));
-          ws.close();
+        // ✅ Correctly mark the connection as alive when receiving a heartbeat response
+        if (parsedMessage.type === "heartbeat_response") {
+          ws.isAlive = true;
+          console.log(
+            `🔄 Heartbeat received from ${ws.deviceId}, keeping connection alive.`
+          );
           return;
         }
 
-        // Handle authenticated messages
         handleWebSocketMessage(ws, parsedMessage);
       } catch (error) {
-        console.error("Invalid WebSocket message:", error.message);
-        ws.send(
-          JSON.stringify({ type: "error", message: "Invalid message format" })
-        );
+        console.error("⚠️ Invalid WebSocket message (ignored):", message);
       }
     });
 
-    // Handle connection close
     ws.on("close", () => {
-      console.log("WebSocket connection closed.");
+      console.log(
+        `WebSocket connection closed for ${ws.deviceId || "Unknown"}`
+      );
       removeConnectedDevice(ws);
     });
 
     ws.on("error", (error) => {
       console.error("WebSocket error:", error.message);
     });
-
-    ws.on("pong", () => {
-      markDeviceAlive(ws);
-    });
   });
 
-  // Periodic ping to check if the clients are alive
+  // ✅ Periodically request heartbeats from ESP32
   setInterval(() => {
     wss.clients.forEach((ws) => {
       if (!ws.isAlive) {
-        console.log("Client unresponsive, closing connection.");
+        console.log(
+          `Client ${ws.deviceId || "Unknown"} unresponsive, closing connection.`
+        );
+        removeConnectedDevice(ws);
         ws.terminate();
       } else {
         ws.isAlive = false;
-        ws.ping();
+        ws.send(JSON.stringify({ type: "heartbeat_request" }));
       }
     });
   }, PING_INTERVAL);
