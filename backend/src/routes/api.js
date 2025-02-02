@@ -1,5 +1,6 @@
 import express from "express";
 import { getDevices, addDevice } from "../services/supabase.js";
+import { requestDeviceInfo } from "../services/websocket.js";
 import { getActiveConnections } from "../services/connectedDevices.js";
 
 const router = express.Router();
@@ -178,6 +179,44 @@ router.get("/websockets/active", (req, res) => {
     res
       .status(500)
       .json({ error: "Failed to fetch active WebSocket connections." });
+  }
+});
+
+/**
+ * @swagger
+ * /api/devices/{deviceId}/info:
+ *   get:
+ *     summary: Get live system details of an ESP32 device
+ *     parameters:
+ *       - in: path
+ *         name: deviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique ID of the device
+ *     responses:
+ *       200:
+ *         description: Live system info of the ESP32 device
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Error retrieving device info
+ */
+router.get("/devices/:deviceId/info", async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+
+    // ✅ Debugging: Log active WebSocket connections
+    console.log(`🔍 Active Devices:`, getActiveConnections());
+
+    const deviceInfo = await requestDeviceInfo(deviceId);
+    res.json(deviceInfo);
+  } catch (error) {
+    console.error(
+      `❌ Error retrieving device info for ${req.params.deviceId}:`,
+      error.message
+    );
+    res.status(500).json({ error: error.message });
   }
 });
 

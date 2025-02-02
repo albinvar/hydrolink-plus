@@ -2,7 +2,7 @@
 const connectedDevices = new Map();
 
 /**
- * Add a device to the connectedDevices map
+ * ✅ Add a device to the connectedDevices map
  * @param {string} deviceId - Unique identifier of the device
  * @param {WebSocket} ws - WebSocket connection instance
  */
@@ -18,7 +18,7 @@ export const addConnectedDevice = (deviceId, ws) => {
 };
 
 /**
- * Mark a device as alive when it responds to a ping
+ * ✅ Mark a device as alive when it responds to a ping
  * @param {WebSocket} ws - WebSocket connection instance
  */
 export const markDeviceAlive = (ws) => {
@@ -31,7 +31,7 @@ export const markDeviceAlive = (ws) => {
 };
 
 /**
- * Remove a device from the connectedDevices map
+ * ✅ Remove a device from the connectedDevices map
  * @param {WebSocket} ws - WebSocket connection instance to remove
  */
 export const removeConnectedDevice = (ws) => {
@@ -44,7 +44,7 @@ export const removeConnectedDevice = (ws) => {
 };
 
 /**
- * Get a list of all active WebSocket connections
+ * ✅ Get a list of all active WebSocket connections
  * @returns {Array} - List of active device IDs
  */
 export const getActiveConnections = () => {
@@ -52,7 +52,7 @@ export const getActiveConnections = () => {
 };
 
 /**
- * Get detailed information on all active WebSocket connections
+ * ✅ Get detailed information on all active WebSocket connections
  * @returns {Array} - List of device info objects { deviceId, connectedAt, lastActive }
  */
 export const getActiveConnectionsDetails = () => {
@@ -64,7 +64,17 @@ export const getActiveConnectionsDetails = () => {
 };
 
 /**
- * Get the device ID associated with a WebSocket instance
+ * ✅ Get the WebSocket instance for a connected device ID
+ * @param {string} deviceId - The device ID
+ * @returns {WebSocket|null} - WebSocket connection if found, else null
+ */
+export const getConnectedDevice = (deviceId) => {
+  const device = connectedDevices.get(deviceId);
+  return device ? device.ws : null;
+};
+
+/**
+ * ✅ Get the device ID associated with a WebSocket instance
  * @param {WebSocket} ws - WebSocket connection instance
  * @returns {string|null} - Device ID or null if not found
  */
