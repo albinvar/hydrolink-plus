@@ -60,6 +60,10 @@ void led_init(void) {
 }
 
 void led_set_status(led_status_t status) {
+    if (current_status == status) {
+        return;  // ✅ Avoid redundant status changes
+    }
+
     ESP_LOGI(TAG, "Changing LED status to: %d", status);
     current_status = status;
 }
