@@ -12,18 +12,22 @@ static const char *TAG = "WEBSOCKET";
 #define SECRET_KEY "5a3a6ac53ad64537"
 
 static esp_websocket_client_handle_t client = NULL;
-static bool keep_running = true;
 static bool is_authenticated = false; // Authentication state
+static bool websocket_connected = false; // WebSocket connection state
 
+/**
+ * @brief Handles WebSocket events efficiently.
+ */
 static void websocket_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     esp_websocket_event_data_t *data = (esp_websocket_event_data_t *)event_data;
 
     switch (event_id) {
         case WEBSOCKET_EVENT_CONNECTED:
-            ESP_LOGI(TAG, "WebSocket connected.");
-            led_set_status(LED_STATUS_WS_DISCONNECTED); // Assume disconnected until authenticated
+            ESP_LOGI(TAG, "✅ WebSocket Connected");
+            websocket_connected = true;
+            led_set_status(LED_STATUS_WS_DISCONNECTED);  // Assume disconnected until authenticated
 
-            // Send authentication request
+            // Authenticate only if not already authenticated
             if (!is_authenticated) {
                 JSON_Value *root_value = json_value_init_object();
                 JSON_Object *root_object = json_value_get_object(root_value);
@@ -45,29 +49,30 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
             break;
 
         case WEBSOCKET_EVENT_DISCONNECTED:
-            ESP_LOGW(TAG, "WebSocket disconnected.");
+            ESP_LOGW(TAG, "⚠️ WebSocket Disconnected");
+            websocket_connected = false;
             is_authenticated = false;
-            led_set_status(LED_STATUS_WS_DISCONNECTED); // Set LED to disconnected state
+            led_set_status(LED_STATUS_WS_DISCONNECTED);
             break;
 
         case WEBSOCKET_EVENT_DATA:
-            ESP_LOGI(TAG, "WebSocket received data: %.*s", data->data_len, (char *)data->data_ptr);
+            ESP_LOGD(TAG, "📩 WebSocket received data: %.*s", data->data_len, (char *)data->data_ptr);
 
             // Parse JSON response
             JSON_Value *response_value = json_parse_string((char *)data->data_ptr);
             if (response_value) {
                 JSON_Object *response_object = json_value_get_object(response_value);
                 const char *type = json_object_get_string(response_object, "type");
+
                 if (type && strcmp(type, "auth_ack") == 0) {
                     bool success = json_object_get_boolean(response_object, "success");
                     if (!success) {
-                        const char *message = json_object_get_string(response_object, "message");
-                        ESP_LOGE(TAG, "Authentication failed: %s", message ? message : "Unknown error");
-                        keep_running = false;
-                        esp_websocket_client_stop(client);
+                        ESP_LOGE(TAG, "❌ Authentication Failed");
+                        is_authenticated = false;
                         led_set_status(LED_STATUS_WS_DISCONNECTED);
+                        esp_websocket_client_stop(client);
                     } else {
-                        ESP_LOGI(TAG, "Authentication succeeded.");
+                        ESP_LOGI(TAG, "✅ Authentication Succeeded");
                         is_authenticated = true;
                         led_set_status(LED_STATUS_CONNECTED); // ✅ LED stays ON when authenticated
                     }
@@ -77,16 +82,34 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
             break;
 
         case WEBSOCKET_EVENT_ERROR:
-            ESP_LOGE(TAG, "WebSocket error occurred.");
-            is_authenticated = false;
-            led_set_status(LED_STATUS_WS_DISCONNECTED);
-            break;
+    ESP_LOGE(TAG, "🚨 WebSocket Error Occurred");
+    websocket_connected = false;
+    is_authenticated = false;
+    led_set_status(LED_STATUS_WS_DISCONNECTED);
+    break;
 
-        default:
-            break;
+default:
+    ESP_LOGW(TAG, "⚠️ Unhandled WebSocket event: %" PRId32, event_id);
+    break;
     }
 }
 
+/**
+ * @brief WebSocket Reconnection Task (Runs Independently)
+ */
+static void websocket_reconnect_task(void *param) {
+    while (true) {
+        if (!websocket_connected) {
+            ESP_LOGW(TAG, "🔄 Reconnecting WebSocket...");
+            esp_websocket_client_start(client);
+        }
+        vTaskDelay(pdMS_TO_TICKS(10000));  // Retry every 10 seconds
+    }
+}
+
+/**
+ * @brief Initializes WebSocket connection.
+ */
 void websocket_init(void) {
     esp_websocket_client_config_t websocket_cfg = {
         .uri = WEBSOCKET_URL,
@@ -95,20 +118,9 @@ void websocket_init(void) {
     client = esp_websocket_client_init(&websocket_cfg);
     esp_websocket_register_events(client, WEBSOCKET_EVENT_ANY, websocket_event_handler, NULL);
 
-    ESP_LOGI(TAG, "Connecting to WebSocket server...");
+    ESP_LOGI(TAG, "🌐 Connecting to WebSocket Server...");
     esp_websocket_client_start(client);
 
-    while (keep_running) {
-        if (!esp_websocket_client_is_connected(client)) {
-            ESP_LOGW(TAG, "WebSocket disconnected. Retrying in 10 seconds...");
-            is_authenticated = false;
-            led_set_status(LED_STATUS_WS_DISCONNECTED);
-            vTaskDelay(pdMS_TO_TICKS(10000));  // Wait 10 seconds before retrying
-            esp_websocket_client_start(client);
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-
-    ESP_LOGI(TAG, "WebSocket task stopped.");
-    esp_websocket_client_destroy(client);
+    // Start the reconnection task in the background
+    xTaskCreate(websocket_reconnect_task, "websocket_reconnect_task", 2048, NULL, 5, NULL);
 }
