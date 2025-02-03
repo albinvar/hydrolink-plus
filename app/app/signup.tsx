@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -62,7 +63,6 @@ export default function SignupScreen() {
       // Mock API call for registration
       setTimeout(() => {
         setIsLoading(false);
-        alert("User Registered Successfully!");
         router.push("/signup-qr"); // Navigate to QR scanning page
       }, 2000);
     } catch (error) {
@@ -75,7 +75,15 @@ export default function SignupScreen() {
     <View style={styles.container}>
       <StarBackground />
       {/* Header */}
-      <MaterialCommunityIcons name="account-plus" size={100} color="#4FC3F7" />
+      <Image
+        source={require("../assets/images/logo.png")}
+        style={{
+          width: 400,
+          height: 170,
+          marginBottom: 30,
+          resizeMode: "contain",
+        }}
+      />
       <Text style={styles.title}>Create Account</Text>
 
       {/* Name Input */}

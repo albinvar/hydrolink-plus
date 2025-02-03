@@ -30,7 +30,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack screenOptions={{ headerShown: false }}>
         {/* Splash screen */}
         <Stack.Screen name="splash" options={{ headerShown: false }} />
         {/* Login screen */}
