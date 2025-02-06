@@ -9,4 +9,5 @@ idf_component_register(
                   api               # Add API component dependency
                     parson            # Add Parson component dependency
                     websocket         # Add WebSocket component dependency
+                    water_quality     # Add Water Quality component dependency
 )

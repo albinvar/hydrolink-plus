@@ -1,10 +1,14 @@
 #ifndef WATER_QUALITY_H
 #define WATER_QUALITY_H
 
-#include "esp_adc/adc_oneshot.h"
+#include <stdint.h>
 
 // ✅ Define DEVICE_ID
 #define DEVICE_ID "HLP001"
+
+// ✅ Define ADC Channels for Sensors
+#define PH_SENSOR_CHANNEL ADC_CHANNEL_7  // ✅ GPIO 35 corresponds to ADC1 Channel 7
+
 
 typedef struct {
     int ph_raw;

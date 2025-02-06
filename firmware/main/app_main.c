@@ -6,11 +6,16 @@
 #include "api.h"
 #include "websocket.h"
 #include "led_control.h"
+#include "water_quality.h"  // ✅ Add this line
+
 
 static const char *TAG = "MAIN";
 
 void app_main(void) {
     ESP_LOGI(TAG, "Starting HydroLink Plus...");
+
+    // ✅ Initialize ADC before using it
+    water_quality_adc_init();
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
