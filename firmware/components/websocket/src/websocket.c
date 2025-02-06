@@ -4,6 +4,7 @@
 #include "led_control.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "water_quality.h"  // Include the new water quality component
 
 static const char *TAG = "WEBSOCKET";
 
@@ -12,9 +13,8 @@ static const char *TAG = "WEBSOCKET";
 #define SECRET_KEY "5a3a6ac53ad64537"
 
 static esp_websocket_client_handle_t client = NULL;
-static bool keep_running = true;
 static bool is_authenticated = false;
-static uint32_t last_auth_time = 0;
+
 
 /**
  * ✅ Handles WebSocket events
@@ -54,11 +54,41 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
                 led_set_status(LED_STATUS_CONNECTED);
             }
 
-            // ✅ Properly detect "heartbeat_request" and respond with "heartbeat_response"
+            // ✅ Respond to heartbeat request from the server
             if (strstr((char *)data->data_ptr, "\"type\":\"heartbeat_request\"")) {
                 ESP_LOGI(TAG, "🔄 Received Heartbeat Request from Server, Sending Response...");
                 const char *heartbeat_reply = "{\"type\":\"heartbeat_response\"}";
                 esp_websocket_client_send_text(client, heartbeat_reply, strlen(heartbeat_reply), portMAX_DELAY);
+            }
+
+            if (strstr((char *)data->data_ptr, "\"type\":\"get_water_quality_results\"")) {
+                ESP_LOGI(TAG, "💧 Received Water Quality Request, Sending Real Data...");
+
+                // ✅ Read real sensor values
+                water_quality_data_t sensor_data;
+                water_quality_read(&sensor_data);
+                char *json_data = water_quality_to_json(&sensor_data);
+
+                // ✅ Send to WebSocket
+                esp_websocket_client_send_text(client, json_data, strlen(json_data), portMAX_DELAY);
+                free(json_data);
+            }
+
+            // ✅ Respond to command request
+            if (strstr((char *)data->data_ptr, "\"type\":\"command_request\"")) {
+                ESP_LOGI(TAG, "🛠 Received Command Request, Sending Response...");
+
+                JSON_Value *response_value = json_value_init_object();
+                JSON_Object *response_object = json_value_get_object(response_value);
+                json_object_set_string(response_object, "type", "command_response");
+                json_object_set_string(response_object, "deviceId", DEVICE_ID);
+                json_object_set_string(response_object, "status", "Command received and executed");
+
+                char *response_message = json_serialize_to_string(response_value);
+                esp_websocket_client_send_text(client, response_message, strlen(response_message), portMAX_DELAY);
+
+                json_free_serialized_string(response_message);
+                json_value_free(response_value);
             }
             break;
 
@@ -80,24 +110,6 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
     }
 }
 
-
-/**
- * ✅ Background task for automatic reconnection
- */
-static void websocket_reconnect_task(void *arg) {
-    while (keep_running) {
-        if (!esp_websocket_client_is_connected(client)) {
-            ESP_LOGW(TAG, "🔄 Attempting WebSocket Reconnect...");
-            is_authenticated = false;
-            led_set_status(LED_STATUS_WS_DISCONNECTED);
-            vTaskDelay(pdMS_TO_TICKS(15000));  // Prevent spam reconnects
-            esp_websocket_client_start(client);
-        }
-        vTaskDelay(pdMS_TO_TICKS(5000));
-    }
-    vTaskDelete(NULL);
-}
-
 /**
  * ✅ Initializes WebSocket client
  */
@@ -111,6 +123,4 @@ void websocket_init(void) {
 
     ESP_LOGI(TAG, "🌐 Connecting to WebSocket server...");
     esp_websocket_client_start(client);
-
-    xTaskCreate(websocket_reconnect_task, "websocket_reconnect", 4096, NULL, 5, NULL);
 }

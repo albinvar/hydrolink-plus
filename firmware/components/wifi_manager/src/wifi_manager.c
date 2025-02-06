@@ -26,6 +26,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
     }
 }
 
+
 // Initialize Wi-Fi in station mode
 void wifi_init_sta(const char *ssid, const char *password) {
     if (wifi_initialized) {
