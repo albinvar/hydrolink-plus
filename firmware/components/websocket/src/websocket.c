@@ -4,17 +4,33 @@
 #include "led_control.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "water_quality.h"  // Include the new water quality component
+#include "water_quality.h"
+#include "driver/gpio.h"  // ✅ Add GPIO Control
 
 static const char *TAG = "WEBSOCKET";
 
 #define WEBSOCKET_URL "ws://hlp.albinvar.in"
 #define DEVICE_ID "HLP001"
 #define SECRET_KEY "5a3a6ac53ad64537"
+#define VALVE_GPIO_PIN 18  // ✅ GPIO for Electromechanical Valve
 
 static esp_websocket_client_handle_t client = NULL;
 static bool is_authenticated = false;
 
+/**
+ * ✅ Initialize Valve GPIO
+ */
+void valve_init() {
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << VALVE_GPIO_PIN),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
+    };
+    gpio_config(&io_conf);
+    gpio_set_level(VALVE_GPIO_PIN, 0); // Ensure valve is OFF at startup
+}
 
 /**
  * ✅ Handles WebSocket events
@@ -61,34 +77,52 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
                 esp_websocket_client_send_text(client, heartbeat_reply, strlen(heartbeat_reply), portMAX_DELAY);
             }
 
+            // ✅ Handle Water Quality Requests
             if (strstr((char *)data->data_ptr, "\"type\":\"get_water_quality_results\"")) {
                 ESP_LOGI(TAG, "💧 Received Water Quality Request, Sending Real Data...");
-
-                // ✅ Read real sensor values
                 water_quality_data_t sensor_data;
                 water_quality_read(&sensor_data);
                 char *json_data = water_quality_to_json(&sensor_data);
-
-                // ✅ Send to WebSocket
                 esp_websocket_client_send_text(client, json_data, strlen(json_data), portMAX_DELAY);
                 free(json_data);
             }
 
-            // ✅ Respond to command request
-            if (strstr((char *)data->data_ptr, "\"type\":\"command_request\"")) {
-                ESP_LOGI(TAG, "🛠 Received Command Request, Sending Response...");
+            // ✅ Handle Valve Control Commands
+            if (strstr((char *)data->data_ptr, "\"type\":\"open_valve\"")) {
+                ESP_LOGI(TAG, "🚰 Received Command: OPEN VALVE");
+                gpio_set_level(VALVE_GPIO_PIN, 1); // ✅ Turn Valve ON
 
-                JSON_Value *response_value = json_value_init_object();
-                JSON_Object *response_object = json_value_get_object(response_value);
-                json_object_set_string(response_object, "type", "command_response");
-                json_object_set_string(response_object, "deviceId", DEVICE_ID);
-                json_object_set_string(response_object, "status", "Command received and executed");
+                // ✅ Send Confirmation Response
+    JSON_Value *response_value = json_value_init_object();
+    JSON_Object *response_object = json_value_get_object(response_value);
+    json_object_set_string(response_object, "type", "command_response");
+    json_object_set_string(response_object, "deviceId", DEVICE_ID);
+    json_object_set_string(response_object, "status", "Valve Opened");
 
-                char *response_message = json_serialize_to_string(response_value);
-                esp_websocket_client_send_text(client, response_message, strlen(response_message), portMAX_DELAY);
+    char *response_message = json_serialize_to_string(response_value);
+    esp_websocket_client_send_text(client, response_message, strlen(response_message), portMAX_DELAY);
 
-                json_free_serialized_string(response_message);
-                json_value_free(response_value);
+    json_free_serialized_string(response_message);
+    json_value_free(response_value);
+            }
+
+            if (strstr((char *)data->data_ptr, "\"type\":\"close_valve\"")) {
+                ESP_LOGI(TAG, "🚰 Received Command: CLOSE VALVE");
+                gpio_set_level(VALVE_GPIO_PIN, 0); // ✅ Turn Valve OFF
+
+
+                // ✅ Send Confirmation Response
+    JSON_Value *response_value = json_value_init_object();
+    JSON_Object *response_object = json_value_get_object(response_value);
+    json_object_set_string(response_object, "type", "command_response");
+    json_object_set_string(response_object, "deviceId", DEVICE_ID);
+    json_object_set_string(response_object, "status", "Valve Closed");
+
+    char *response_message = json_serialize_to_string(response_value);
+    esp_websocket_client_send_text(client, response_message, strlen(response_message), portMAX_DELAY);
+
+    json_free_serialized_string(response_message);
+    json_value_free(response_value);
             }
             break;
 
@@ -114,6 +148,8 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
  * ✅ Initializes WebSocket client
  */
 void websocket_init(void) {
+    valve_init();  // ✅ Initialize valve GPIO
+
     esp_websocket_client_config_t websocket_cfg = {
         .uri = WEBSOCKET_URL,
     };
