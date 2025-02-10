@@ -4,6 +4,7 @@ import { requestDeviceInfo } from "../services/websocket.js";
 import { getActiveConnections } from "../services/connectedDevices.js";
 import { sendCommandToDevice } from "../services/websocket.js";
 import { requestWaterQualityResults } from "../services/websocket.js";
+import { controlValve } from "../services/websocket.js";
 
 const router = express.Router();
 
@@ -296,6 +297,59 @@ router.get("/devices/:deviceId/water-quality", async (req, res) => {
   } catch (error) {
     console.error(
       `❌ Error retrieving water quality results for ${req.params.deviceId}:`,
+      error.message
+    );
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/devices/{deviceId}/valve:
+ *   post:
+ *     summary: Open or close the electromechanical valve
+ *     parameters:
+ *       - in: path
+ *         name: deviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique ID of the ESP32 device
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [open, close]
+ *                 example: "open"
+ *     responses:
+ *       200:
+ *         description: Valve operation successful
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Error controlling valve
+ */
+router.post("/devices/:deviceId/valve", async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { action } = req.body;
+
+    if (action !== "open" && action !== "close") {
+      return res
+        .status(400)
+        .json({ error: "Invalid action. Use 'open' or 'close'." });
+    }
+
+    const response = await controlValve(deviceId, action === "open");
+    res.json(response);
+  } catch (error) {
+    console.error(
+      `❌ Error controlling valve for ${req.params.deviceId}:`,
       error.message
     );
     res.status(500).json({ error: error.message });
