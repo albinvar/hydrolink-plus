@@ -6,7 +6,7 @@ import {
 } from "./connectedDevices.js";
 import { handleAuthentication } from "./websocketHandlers.js";
 
-const PING_INTERVAL = 30000; // Server requests heartbeat every 30 seconds
+const PING_INTERVAL = 300; // Server requests heartbeat every 30 seconds
 
 export const initWebSocketServer = (server) => {
   const wss = new WebSocketServer({ server });
@@ -82,6 +82,85 @@ export const initWebSocketServer = (server) => {
   });
 
   return wss;
+};
+
+/**
+ * ✅ Send a command to an ESP32 device using WebSocket
+ * @param {string} deviceId - The device ID
+ * @param {string} command - The command to execute
+ * @returns {Promise<Object>} - Command execution response
+ */
+export const sendCommandToDevice = (deviceId, command) => {
+  return new Promise((resolve, reject) => {
+    const ws = getConnectedDevice(deviceId);
+    if (!ws) {
+      return reject(new Error(`Device ${deviceId} not connected`));
+    }
+
+    // ✅ Listen for command_response from the ESP32
+    const handleMessage = (message) => {
+      try {
+        const parsedMessage = JSON.parse(message);
+        if (
+          parsedMessage.type === "command_response" &&
+          parsedMessage.deviceId === deviceId
+        ) {
+          ws.removeListener("message", handleMessage);
+          resolve(parsedMessage);
+        }
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    ws.on("message", handleMessage);
+    ws.send(JSON.stringify({ type: "command_request", payload: { command } }));
+
+    // Timeout after 5 seconds if no response
+    setTimeout(() => {
+      ws.removeListener("message", handleMessage);
+      reject(new Error(`Device ${deviceId} did not respond`));
+    }, 5000);
+  });
+};
+
+/**
+ * ✅ Request water quality results from an ESP32 device using WebSocket
+ * @param {string} deviceId - The device ID
+ * @returns {Promise<Object>} - Water quality data
+ */
+export const requestWaterQualityResults = (deviceId) => {
+  return new Promise((resolve, reject) => {
+    const ws = getConnectedDevice(deviceId);
+    if (!ws) {
+      return reject(new Error(`Device ${deviceId} not connected`));
+    }
+
+    // ✅ Listen for water_quality_results response from the ESP32
+    const handleMessage = (message) => {
+      try {
+        const parsedMessage = JSON.parse(message);
+        if (
+          parsedMessage.type === "water_quality_results" &&
+          parsedMessage.payload.deviceId === deviceId
+        ) {
+          ws.removeListener("message", handleMessage);
+          resolve(parsedMessage.payload);
+        }
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    ws.on("message", handleMessage);
+    ws.send(JSON.stringify({ type: "get_water_quality_results" }));
+
+    // Timeout after 5 seconds if no response
+    setTimeout(() => {
+      ws.removeListener("message", handleMessage);
+      reject(new Error(`Device ${deviceId} did not respond`));
+    }, 5000);
+  });
 };
 
 /**

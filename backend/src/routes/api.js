@@ -2,6 +2,8 @@ import express from "express";
 import { getDevices, addDevice } from "../services/supabase.js";
 import { requestDeviceInfo } from "../services/websocket.js";
 import { getActiveConnections } from "../services/connectedDevices.js";
+import { sendCommandToDevice } from "../services/websocket.js";
+import { requestWaterQualityResults } from "../services/websocket.js";
 
 const router = express.Router();
 
@@ -214,6 +216,86 @@ router.get("/devices/:deviceId/info", async (req, res) => {
   } catch (error) {
     console.error(
       `❌ Error retrieving device info for ${req.params.deviceId}:`,
+      error.message
+    );
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/devices/{deviceId}/execute:
+ *   post:
+ *     summary: Send a command to an ESP32 device
+ *     parameters:
+ *       - in: path
+ *         name: deviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique ID of the device
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               command:
+ *                 type: string
+ *                 example: "restart"
+ *     responses:
+ *       200:
+ *         description: Command executed successfully
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Error executing command
+ */
+router.post("/devices/:deviceId/execute", async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { command } = req.body;
+
+    const response = await sendCommandToDevice(deviceId, command);
+    res.json(response);
+  } catch (error) {
+    console.error(
+      `❌ Error executing command for ${req.params.deviceId}:`,
+      error.message
+    );
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/devices/{deviceId}/water-quality:
+ *   get:
+ *     summary: Get water quality results from an ESP32 device
+ *     parameters:
+ *       - in: path
+ *         name: deviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique ID of the device
+ *     responses:
+ *       200:
+ *         description: Water quality results from the ESP32 device
+ *       404:
+ *         description: Device not found
+ *       500:
+ *         description: Error retrieving water quality data
+ */
+router.get("/devices/:deviceId/water-quality", async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const waterQualityData = await requestWaterQualityResults(deviceId);
+    res.json(waterQualityData);
+  } catch (error) {
+    console.error(
+      `❌ Error retrieving water quality results for ${req.params.deviceId}:`,
       error.message
     );
     res.status(500).json({ error: error.message });
