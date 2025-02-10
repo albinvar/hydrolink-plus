@@ -1,0 +1,179 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import { useRouter } from "expo-router";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+
+const windowWidth = Dimensions.get("window").width;
+
+export default function SignupQR() {
+  const [facing, setFacing] = useState<CameraType>("back");
+  const [torchEnabled, setTorchEnabled] = useState(false);
+  const [isScanning, setIsScanning] = useState(true);
+  const [permission, requestPermission] = useCameraPermissions();
+  const router = useRouter();
+
+  if (!permission) {
+    return <View />;
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.permissionText}>
+          We need your permission to use the camera
+        </Text>
+        <TouchableOpacity
+          onPress={requestPermission}
+          style={styles.permissionButton}
+        >
+          <Text style={styles.permissionButtonText}>Grant Permission</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Handle QR Code Scanned
+  const handleQRCodeScanned = (data: string) => {
+    if (!isScanning) return; // Prevent duplicate scans
+
+    if (data.startsWith("hlp-met-")) {
+      setIsScanning(false); // Stop scanning
+      router.push({ pathname: "/linking-process", params: { meterId: data } }); // Navigate to linking page with the meter ID
+    } else {
+      setIsScanning(false); // Stop scanning temporarily
+      alert("Invalid QR Code: This is not a valid HydroLink Plus meter.");
+      setTimeout(() => setIsScanning(true), 2000); // Resume scanning after 2 seconds
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Camera in a small box */}
+      <View style={styles.cameraBox}>
+        <CameraView
+          style={styles.camera}
+          facing={facing}
+          enableTorch={torchEnabled}
+          onBarcodeScanned={({ data }) => handleQRCodeScanned(data)} // Updated scanning logic
+          barcodeScannerSettings={{
+            barcodeTypes: ["qr"],
+          }}
+        />
+        {/* Torch Icon */}
+        <TouchableOpacity
+          style={styles.torchButton}
+          onPress={() => setTorchEnabled(!torchEnabled)}
+        >
+          <MaterialCommunityIcons
+            name={torchEnabled ? "flashlight-off" : "flashlight"}
+            size={28}
+            color="#FFFFFF"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Instructions */}
+      <View style={styles.instructionsContainer}>
+        <Text style={styles.instructionsTitle}>
+          Link Your HydroLink Plus Meter
+        </Text>
+        <Text style={styles.instructionsText}>
+          Align the QR code on your HLP Meter within the camera box above. Once
+          scanned successfully, your meter will be linked to your account.
+        </Text>
+        <TouchableOpacity
+          style={styles.flipButton}
+          onPress={() =>
+            setFacing((current) => (current === "back" ? "front" : "back"))
+          }
+        >
+          <Text style={styles.flipButtonText}>Flip Camera</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#121212",
+  },
+  permissionText: {
+    color: "#FFFFFF",
+    textAlign: "center",
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  permissionButton: {
+    alignSelf: "center",
+    backgroundColor: "#4FC3F7",
+    padding: 10,
+    borderRadius: 8,
+  },
+  permissionButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  cameraBox: {
+    width: windowWidth * 0.8, // 80% of screen width
+    height: windowWidth * 0.8, // Square box
+    alignSelf: "center",
+    marginTop: 40,
+    borderRadius: 16,
+    overflow: "hidden", // Ensure camera view is clipped to rounded corners
+    borderWidth: 2,
+    borderColor: "#4FC3F7",
+    position: "relative",
+  },
+  camera: {
+    flex: 1,
+  },
+  torchButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderRadius: 20,
+    padding: 10,
+  },
+  instructionsContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: "center",
+  },
+  instructionsTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  instructionsText: {
+    color: "#B0BEC5",
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  flipButton: {
+    alignSelf: "center",
+    backgroundColor: "#4FC3F7",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  flipButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});
