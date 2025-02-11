@@ -1,18 +1,21 @@
+import os
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
-import os
 
 MODEL_FOLDER = "models/user_models"
+IMAGE_FOLDER = "static/forecast_graphs"  # Folder to store graphs
 os.makedirs(MODEL_FOLDER, exist_ok=True)
+os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
 def train_and_predict(user_id: int, file_path: str):
     """Train LSTM model using user's historical water usage data and forecast next 30 days"""
 
     # Load user data
     df = pd.read_csv(file_path)
-    
+
     # Convert Date column
     df['Date'] = pd.to_datetime(df['Date'], dayfirst=True, errors='coerce')
     df.rename(columns={'Date': 'ds', 'Value': 'y'}, inplace=True)
@@ -35,7 +38,7 @@ def train_and_predict(user_id: int, file_path: str):
     df = df.dropna()
 
     features = ['y_lag1', 'y_lag7', 'y_roll_mean_7', 'day_of_week', 'is_weekend']
-    
+
     # Scale features and target separately
     feature_scaler = MinMaxScaler()
     target_scaler = MinMaxScaler()
@@ -78,4 +81,22 @@ def train_and_predict(user_id: int, file_path: str):
     y_pred = model.predict(X_test)
     y_pred_inv = target_scaler.inverse_transform(y_pred)
 
-    return y_pred_inv.flatten().tolist()
+    # 📌 Generate and save forecast graph
+    img_path = f"{IMAGE_FOLDER}/user_{user_id}_forecast.png"
+    plt.figure(figsize=(10, 5))
+    plt.plot(range(1, 31), y_pred_inv.flatten(), marker='o', linestyle='-', label="Predicted Usage")
+    plt.xlabel("Days Ahead")
+    plt.ylabel("Water Usage (Liters)")
+    plt.title(f"30-Day Water Usage Forecast for User {user_id}")
+    plt.legend()
+    plt.grid()
+    plt.savefig(img_path)  # Save as image file
+    plt.close()
+
+    # Return forecasted values and graph image URL
+    image_url = f"http://127.0.0.1:8000/static/forecast_graphs/user_{user_id}_forecast.png"
+    
+    return {
+        "forecasted_usage": y_pred_inv.flatten().tolist(),
+        "graph_url": image_url
+    }
