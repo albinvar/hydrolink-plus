@@ -1,0 +1,66 @@
+# Python
+*.pyc
+*.pyo
+__pycache__
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Uvicorn & ASGI logs
+*.log
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependency directories
+.pip/
+__pypackages__/
+
+# MyPy
+.mypy_cache/
+
+# pytest cache
+.pytest_cache/
+
+# Flask / FastAPI migrations
+migrations/
+
+# .env files (if you're using environment variables)
+.env
+*.env
+
+# Coverage reports
+.coverage
+.coverage.*
+
+# Python Wheel
+*.whl
+
+# PyInstaller
+*.spec
+dist/
+build/
+
+# JetBrains IDEs
+.idea/
+
+# VS Code workspace settings
+.vscode/
+
+# MacOS Finder metadata
+.DS_Store
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+
+
+**/__pycache__/
+**/*.pyc
