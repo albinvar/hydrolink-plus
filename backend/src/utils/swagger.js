@@ -31,6 +31,7 @@ export const setupSwaggerDocs = (app) => {
     // Modify servers dynamically before serving the docs
     swaggerSpec.servers = [
       { url: `${protocol}://${host}`, description: "Dynamic Server" },
+      { url: "https://hydrolinkplus.one", description: "Production Server" },
     ];
 
     next();
