@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  backend:
+    build: .
+    container_name: hydrolink_backend
+    ports:
+      - "6767:6767"
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    networks:
+      - hydrolink_network
+
+networks:
+  hydrolink_network:
+    driver: bridge
