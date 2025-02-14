@@ -16,12 +16,6 @@ const swaggerOptions = {
         email: "team@hydrolinkplus.in",
       },
     },
-    servers: [
-      {
-        url: `http://localhost:${process.env.PORT || 8080}`,
-        description: "Local server",
-      },
-    ],
   },
   apis: ["./src/routes/*.js"], // Path to REST API annotations
 };
@@ -29,6 +23,22 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsDoc(swaggerOptions);
 
 export const setupSwaggerDocs = (app) => {
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use("/api-docs", (req, res, next) => {
+    // Get request protocol and host dynamically
+    const protocol = req.protocol;
+    const host = req.get("host");
+
+    // Modify servers dynamically before serving the docs
+    swaggerSpec.servers = [
+      { url: `${protocol}://${host}`, description: "Dynamic Server" },
+    ];
+
+    next();
+  });
+
+  app.use("/api-docs", swaggerUi.serve, (req, res) =>
+    swaggerUi.setup(swaggerSpec)(req, res)
+  );
+
   console.log("Swagger UI available at /api-docs");
 };
