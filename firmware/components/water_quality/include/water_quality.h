@@ -18,6 +18,7 @@ typedef struct {
     int ph_raw;
     int conductivity_raw;
     int turbidity_raw;
+    int tds_raw;  
     int temperature_raw;
 } water_quality_data_t;
 
