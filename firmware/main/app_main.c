@@ -28,7 +28,7 @@ void app_main(void) {
     led_set_status(LED_STATUS_WIFI_DISCONNECTED);
 
     // Connect to Wi-Fi
-    wifi_init_sta("demo", "12345678");
+    wifi_init_sta("FTTH", "bsnl8596");
 
     // Wait for Wi-Fi connection before proceeding
     while (!wifi_manager_is_connected()) {

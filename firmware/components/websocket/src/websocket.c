@@ -9,7 +9,7 @@
 
 static const char *TAG = "WEBSOCKET";
 
-#define WEBSOCKET_URL "ws://hlp.albinvar.in"
+#define WEBSOCKET_URL "ws://hydrolinkplus.one"
 #define DEVICE_ID "HLP001"
 #define SECRET_KEY "5a3a6ac53ad64537"
 #define VALVE_GPIO_PIN 18  // ✅ GPIO for Electromechanical Valve
