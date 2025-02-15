@@ -1,18 +1,23 @@
 #include "water_quality.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_log.h"
 #include "parson.h"
 
+#define SENSOR_CALIBRATION_OFFSET 0.12  // ✅ Adjust this based on calibration!
+#define NUM_SAMPLES 10  // ✅ Number of samples for averaging
+
 static const char *TAG = "WATER_QUALITY";
-static adc_oneshot_unit_handle_t adc_handle = NULL;  // ✅ Initialize to NULL
+static adc_oneshot_unit_handle_t adc_handle = NULL;
 
 /**
- * ✅ Initialize ADC for Water Quality Sensors
+ * ✅ Initialize ADC for pH Sensor
  */
 void water_quality_adc_init() {
     if (adc_handle != NULL) {
         ESP_LOGW(TAG, "⚠️ ADC Already Initialized! Skipping...");
-        return;  // ✅ Prevent re-initialization
+        return;
     }
 
     adc_oneshot_unit_init_cfg_t init_config = {
@@ -30,33 +35,57 @@ void water_quality_adc_init() {
     ESP_LOGI(TAG, "✅ Water Quality ADC Initialized (pH Sensor on GPIO 35)");
 }
 
-
 /**
- * ✅ Read pH Sensor Data (from GPIO 35)
+ * ✅ Read pH Sensor Data (with averaging & calibration)
  */
 float read_ph_sensor() {
     if (adc_handle == NULL) {
         ESP_LOGE(TAG, "❌ ADC Handle is NULL! Did you call water_quality_adc_init()?");
-        return 0.0;  // Prevent crash
+        return 0.0;
     }
 
-    int raw_value = 0;
-    ESP_ERROR_CHECK(adc_oneshot_read(adc_handle, PH_SENSOR_CHANNEL, &raw_value));
+    int raw_values[NUM_SAMPLES];
+    int temp;
+    
+    // ✅ Collect multiple samples for filtering noise
+    for (int i = 0; i < NUM_SAMPLES; i++) {
+        ESP_ERROR_CHECK(adc_oneshot_read(adc_handle, PH_SENSOR_CHANNEL, &raw_values[i]));
+        vTaskDelay(pdMS_TO_TICKS(10));  // ✅ Small delay between readings
+    }
 
-    // ✅ Convert raw ADC value to pH (adjust scaling based on calibration)
-    float voltage = raw_value * (3.3 / 4095.0);  // Convert ADC value to voltage
-    float ph_value = 3.5 * voltage;  // Approximate pH formula
+    // ✅ Sort values for median filtering (removes extreme values)
+    for (int i = 0; i < NUM_SAMPLES - 1; i++) {
+        for (int j = i + 1; j < NUM_SAMPLES; j++) {
+            if (raw_values[i] > raw_values[j]) {
+                temp = raw_values[i];
+                raw_values[i] = raw_values[j];
+                raw_values[j] = temp;
+            }
+        }
+    }
 
-    ESP_LOGI(TAG, "📊 pH Sensor Raw: %d, Voltage: %.2fV, pH: %.2f", raw_value, voltage, ph_value);
+    // ✅ Take the average of the middle 6 values (to reduce noise)
+    int avg_raw_value = 0;
+    for (int i = 2; i < 8; i++) {
+        avg_raw_value += raw_values[i];
+    }
+    avg_raw_value /= 6;
+
+    // ✅ Convert ADC value to voltage (ESP32 ADC has 12-bit resolution, 3.3V range)
+    float voltage = avg_raw_value * (3.3 / 4095.0);
+
+    // ✅ Convert voltage to pH using the formula from documentation
+    float ph_value = (3.5 * voltage) + SENSOR_CALIBRATION_OFFSET;
+
+    ESP_LOGI(TAG, "📊 pH Sensor -> Raw: %d, Voltage: %.2fV, pH: %.2f", avg_raw_value, voltage, ph_value);
     return ph_value;
 }
-
 
 /**
  * ✅ Read and Format Water Quality Data
  */
 void water_quality_read(water_quality_data_t *data) {
-    data->ph_raw = (int)(read_ph_sensor() * 100);  // Convert pH to scaled integer
+    data->ph_raw = (int)(read_ph_sensor() * 100);  // ✅ Convert pH to scaled integer
     data->conductivity_raw = 1500;  // ✅ Mock Conductivity (for now)
     data->turbidity_raw = 25;  // ✅ Mock Turbidity (for now)
     data->temperature_raw = 248;  // ✅ Mock Temperature (for now)
@@ -64,7 +93,6 @@ void water_quality_read(water_quality_data_t *data) {
     ESP_LOGI(TAG, "📊 Water Quality Readings -> pH: %.2f, Conductivity: %d, Turbidity: %d, Temperature: %d",
              data->ph_raw / 100.0, data->conductivity_raw, data->turbidity_raw, data->temperature_raw);
 }
-
 
 /**
  * ✅ Convert Water Quality Data to JSON

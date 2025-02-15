@@ -1,3 +1,7 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+
 #ifndef WATER_QUALITY_H
 #define WATER_QUALITY_H
 
