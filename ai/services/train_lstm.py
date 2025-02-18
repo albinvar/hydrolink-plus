@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
 MODEL_FOLDER = "models/user_models"
-IMAGE_FOLDER = "static/forecast_graphs"  # Folder to store graphs
+IMAGE_FOLDER = "static/forecast_graphs"
 os.makedirs(MODEL_FOLDER, exist_ok=True)
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
 def train_and_predict(user_id: int, file_path: str):
-    """Train LSTM model using user's historical water usage data and forecast next 30 days"""
-
+    """Train LSTM model using user's historical water usage data and generate multiple forecasts"""
+    
     # Load user data
     df = pd.read_csv(file_path)
 
@@ -26,20 +26,15 @@ def train_and_predict(user_id: int, file_path: str):
     # Create lag features
     df['y_lag1'] = df['y'].shift(1)
     df['y_lag7'] = df['y'].shift(7)
-
-    # Create rolling mean features
     df['y_roll_mean_7'] = df['y'].rolling(window=7).mean()
-
-    # Additional features
     df['day_of_week'] = df['ds'].dt.dayofweek
     df['is_weekend'] = (df['ds'].dt.weekday >= 5).astype(int)
 
-    # Drop NaN values
     df = df.dropna()
 
     features = ['y_lag1', 'y_lag7', 'y_roll_mean_7', 'day_of_week', 'is_weekend']
 
-    # Scale features and target separately
+    # Scale features and target
     feature_scaler = MinMaxScaler()
     target_scaler = MinMaxScaler()
 
@@ -58,7 +53,7 @@ def train_and_predict(user_id: int, file_path: str):
     scaled_data = np.hstack((scaled_features, scaled_target))
     X, y = create_sequences(scaled_data, seq_length)
 
-    # Train/test split (last 30 days for testing)
+    # Train/test split
     X_train, X_test = X[:-30], X[-30:]
     y_train, y_test = y[:-30], y[-30:]
 
@@ -73,30 +68,45 @@ def train_and_predict(user_id: int, file_path: str):
     # Train model
     model.fit(X_train, y_train, epochs=50, batch_size=32, verbose=1)
 
-    # Save trained model
+    # Save model
     model_path = f"{MODEL_FOLDER}/user_{user_id}_lstm.h5"
     model.save(model_path)
 
-    # Predict future usage
-    y_pred = model.predict(X_test)
-    y_pred_inv = target_scaler.inverse_transform(y_pred)
+    # Function to generate future predictions
+    def generate_forecast(days):
+        X_input = X_test[-1:]  # Last known data
+        predictions = []
+        for _ in range(days):
+            pred = model.predict(X_input)[0][0]
+            predictions.append(pred)
+            X_input = np.roll(X_input, shift=-1, axis=1)
+            X_input[0, -1, 0] = pred  # Update with predicted value
+        return target_scaler.inverse_transform(np.array(predictions).reshape(-1, 1)).flatten().tolist()
 
-    # 📌 Generate and save forecast graph
-    img_path = f"{IMAGE_FOLDER}/user_{user_id}_forecast.png"
-    plt.figure(figsize=(10, 5))
-    plt.plot(range(1, 31), y_pred_inv.flatten(), marker='o', linestyle='-', label="Predicted Usage")
-    plt.xlabel("Days Ahead")
-    plt.ylabel("Water Usage (Liters)")
-    plt.title(f"30-Day Water Usage Forecast for User {user_id}")
-    plt.legend()
-    plt.grid()
-    plt.savefig(img_path)  # Save as image file
-    plt.close()
+    # Generate forecasts
+    forecasts = {
+        "30_days": generate_forecast(30),
+        "90_days": generate_forecast(90),
+        "180_days": generate_forecast(180),
+        "365_days": generate_forecast(365),
+    }
 
-    # Return forecasted values and graph image URL
-    image_url = f"http://127.0.0.1:8000/static/forecast_graphs/user_{user_id}_forecast.png"
-    
+    # Generate and save graphs
+    graph_urls = {}
+    for period, values in forecasts.items():
+        img_path = f"{IMAGE_FOLDER}/user_{user_id}_{period}_forecast.png"
+        plt.figure(figsize=(10, 5))
+        plt.plot(range(len(values)), values, marker='o', linestyle='-', label=f"{period.replace('_', ' ').title()} Forecast")
+        plt.xlabel("Days Ahead")
+        plt.ylabel("Water Usage (Liters)")
+        plt.title(f"Water Usage Forecast for {period.replace('_', ' ')}")
+        plt.legend()
+        plt.grid()
+        plt.savefig(img_path)
+        plt.close()
+        graph_urls[period] = f"http://127.0.0.1:8000/static/forecast_graphs/user_{user_id}_{period}_forecast.png"
+
     return {
-        "forecasted_usage": y_pred_inv.flatten().tolist(),
-        "graph_url": image_url
+        "forecasts": forecasts,
+        "graph_urls": graph_urls
     }

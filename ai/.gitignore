@@ -64,3 +64,8 @@ ehthumbs.db
 
 **/__pycache__/
 **/*.pyc
+
+uploads/
+static/
+
+models/user_models/

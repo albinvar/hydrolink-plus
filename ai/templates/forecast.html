@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Water Usage Forecast</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 20px;
+        background-color: #f9f9f9;
+      }
+      h2 {
+        color: #ff7f00;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 2 columns layout */
+        gap: 20px;
+        max-width: 1200px;
+        margin: auto;
+      }
+      .chart-container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      canvas {
+        width: 100% !important;
+        height: 300px !important;
+      }
+      @media (max-width: 900px) {
+        .grid-container {
+          grid-template-columns: 1fr; /* Switch to single column on small screens */
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Water Usage Forecasts</h2>
+
+    <div class="grid-container">
+      <div class="chart-container">
+        <h3>30-Day Forecast</h3>
+        <canvas id="chart_30"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>90-Day Forecast</h3>
+        <canvas id="chart_90"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>180-Day Forecast</h3>
+        <canvas id="chart_180"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>365-Day Forecast</h3>
+        <canvas id="chart_365"></canvas>
+      </div>
+    </div>
+
+    <script>
+      async function fetchData() {
+        try {
+          const response = await fetch(
+            "http://127.0.0.1:8000/api/predict-usage/2"
+          );
+          const data = await response.json();
+
+          if (!data.forecasts) {
+            throw new Error("No forecasted data available.");
+          }
+
+          const forecasts = data.forecasts;
+
+          const colors = [
+            { border: "#ff7f00", background: "rgba(255, 127, 0, 0.2)" }, // Orange
+            { border: "#007bff", background: "rgba(0, 123, 255, 0.2)" }, // Blue
+            { border: "#28a745", background: "rgba(40, 167, 69, 0.2)" }, // Green
+            { border: "#dc3545", background: "rgba(220, 53, 69, 0.2)" }, // Red
+          ];
+
+          function createChart(ctxId, forecastData, color, label) {
+            const ctx = document.getElementById(ctxId).getContext("2d");
+            const labels = Array.from(
+              { length: forecastData.length },
+              (_, i) => `Day ${i + 1}`
+            );
+
+            new Chart(ctx, {
+              type: "line",
+              data: {
+                labels: labels,
+                datasets: [
+                  {
+                    label: label,
+                    data: forecastData,
+                    borderColor: color.border,
+                    backgroundColor: color.background,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: color.border,
+                    fill: true,
+                    tension: 0.4 /* Smooth curves */,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "Days Ahead",
+                      color: "#666",
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "Liters",
+                      color: "#666",
+                    },
+                    beginAtZero: true,
+                  },
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: "top",
+                  },
+                },
+              },
+            });
+          }
+
+          createChart(
+            "chart_30",
+            forecasts["30_days"],
+            colors[0],
+            "30-Day Forecast"
+          );
+          createChart(
+            "chart_90",
+            forecasts["90_days"],
+            colors[1],
+            "90-Day Forecast"
+          );
+          createChart(
+            "chart_180",
+            forecasts["180_days"],
+            colors[2],
+            "180-Day Forecast"
+          );
+          createChart(
+            "chart_365",
+            forecasts["365_days"],
+            colors[3],
+            "365-Day Forecast"
+          );
+        } catch (error) {
+          console.error("Error fetching forecast data:", error);
+          document.body.innerHTML +=
+            "<p style='color: red;'>Error loading forecast data. Please try again.</p>";
+        }
+      }
+
+      fetchData(); // Load data when page loads
+    </script>
+  </body>
+</html>
