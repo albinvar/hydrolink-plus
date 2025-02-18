@@ -5,15 +5,20 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
-MODEL_FOLDER = "models/user_models"
-IMAGE_FOLDER = "static/forecast_graphs"
-os.makedirs(MODEL_FOLDER, exist_ok=True)
-os.makedirs(IMAGE_FOLDER, exist_ok=True)
+# Base folders
+MODEL_FOLDER = "models/meter_models"
+BASE_IMAGE_FOLDER = "static/forecast_graphs"
 
-def train_and_predict(user_id: int, file_path: str):
-    """Train LSTM model using user's historical water usage data and generate multiple forecasts"""
+os.makedirs(MODEL_FOLDER, exist_ok=True)
+
+def train_and_predict(meter_id: int, file_path: str, server_host: str = "http://127.0.0.1:8000"):
+    """Train LSTM model using meter's historical water usage data and generate multiple forecasts"""
     
-    # Load user data
+    # Create meter-specific folder for images
+    meter_image_folder = f"{BASE_IMAGE_FOLDER}/meter_{meter_id}"
+    os.makedirs(meter_image_folder, exist_ok=True)
+
+    # Load meter data
     df = pd.read_csv(file_path)
 
     # Convert Date column
@@ -69,7 +74,7 @@ def train_and_predict(user_id: int, file_path: str):
     model.fit(X_train, y_train, epochs=50, batch_size=32, verbose=1)
 
     # Save model
-    model_path = f"{MODEL_FOLDER}/user_{user_id}_lstm.h5"
+    model_path = f"{MODEL_FOLDER}/meter_{meter_id}_lstm.h5"
     model.save(model_path)
 
     # Function to generate future predictions
@@ -94,7 +99,7 @@ def train_and_predict(user_id: int, file_path: str):
     # Generate and save graphs
     graph_urls = {}
     for period, values in forecasts.items():
-        img_path = f"{IMAGE_FOLDER}/user_{user_id}_{period}_forecast.png"
+        img_path = f"{meter_image_folder}/{period}_forecast.png"
         plt.figure(figsize=(10, 5))
         plt.plot(range(len(values)), values, marker='o', linestyle='-', label=f"{period.replace('_', ' ').title()} Forecast")
         plt.xlabel("Days Ahead")
@@ -104,7 +109,9 @@ def train_and_predict(user_id: int, file_path: str):
         plt.grid()
         plt.savefig(img_path)
         plt.close()
-        graph_urls[period] = f"http://127.0.0.1:8000/static/forecast_graphs/user_{user_id}_{period}_forecast.png"
+        
+        # Dynamic URL generation
+        graph_urls[period] = f"{server_host}/static/forecast_graphs/meter_{meter_id}/{period}_forecast.png"
 
     return {
         "forecasts": forecasts,
