@@ -5,6 +5,7 @@ import {
   getConnectedDevice,
 } from "./connectedDevices.js";
 import { handleAuthentication } from "./websocketHandlers.js";
+import { sendUpdateToDisplay } from "./websocketDisplay.js"; // Import targeted update function
 
 const PING_INTERVAL = 300; // Server requests heartbeat every 30 seconds
 
@@ -72,6 +73,15 @@ export const initWebSocketServer = (server) => {
             `💧 Water Quality Data from ${ws.deviceId}:`,
             parsedMessage.payload
           );
+
+          // Send update only to the correct ESP32 display
+          sendUpdateToDisplay(ws.deviceId, {
+            deviceId: ws.deviceId,
+            type: "water_quality_results",
+            payload: parsedMessage.payload,
+            timestamp: new Date().toISOString(),
+          });
+
           return;
         }
 
@@ -81,6 +91,13 @@ export const initWebSocketServer = (server) => {
             `🚰 Valve Control Response from ${ws.deviceId}:`,
             parsedMessage.payload
           );
+          // Send update only to the correct ESP32 display
+          sendUpdateToDisplay(ws.deviceId, {
+            deviceId: ws.deviceId,
+            type: "valve_control_response",
+            payload: parsedMessage.payload,
+            timestamp: new Date().toISOString(),
+          });
           return;
         }
       } catch (error) {
