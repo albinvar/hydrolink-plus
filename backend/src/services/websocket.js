@@ -74,14 +74,6 @@ export const initWebSocketServer = (server) => {
             parsedMessage.payload
           );
 
-          // Send update only to the correct ESP32 display
-          sendUpdateToDisplay(ws.deviceId, {
-            deviceId: ws.deviceId,
-            type: "water_quality_results",
-            payload: parsedMessage.payload,
-            timestamp: new Date().toISOString(),
-          });
-
           return;
         }
 
@@ -91,13 +83,7 @@ export const initWebSocketServer = (server) => {
             `🚰 Valve Control Response from ${ws.deviceId}:`,
             parsedMessage.payload
           );
-          // Send update only to the correct ESP32 display
-          sendUpdateToDisplay(ws.deviceId, {
-            deviceId: ws.deviceId,
-            type: "valve_control_response",
-            payload: parsedMessage.payload,
-            timestamp: new Date().toISOString(),
-          });
+
           return;
         }
       } catch (error) {
@@ -230,6 +216,14 @@ export const controlValve = (deviceId, open) => {
 
     ws.on("message", handleMessage);
     ws.send(JSON.stringify({ type: commandType }));
+
+    // USE sendUpdateToDisplay function to send targeted updates
+    sendUpdateToDisplay(deviceId, {
+      deviceId,
+      type: "valve_control_command",
+      payload: { open },
+      timestamp: new Date().toISOString(),
+    });
 
     // Timeout after 5 seconds if no response
     setTimeout(() => {

@@ -25,56 +25,128 @@ export const startDisplayWebSocketServer = (port) => {
         const parsedMessage = JSON.parse(message);
         console.log("📩 Received WebSocket Message:", parsedMessage); // ✅ Debugging log
 
-        // ✅ Validate authentication payload before processing
-        if (
-          !parsedMessage.payload ||
-          !parsedMessage.payload.deviceId ||
-          !parsedMessage.payload.secret_key
-        ) {
-          console.error(
-            "❌ Authentication failed: Missing `deviceId` or `secret_key` in payload."
+        // ✅ Authentication Handling
+        if (parsedMessage.type === "authenticate") {
+          if (
+            !parsedMessage.payload ||
+            !parsedMessage.payload.deviceId ||
+            !parsedMessage.payload.secret_key
+          ) {
+            console.error(
+              "❌ Authentication failed: Missing `deviceId` or `secret_key` in payload."
+            );
+            ws.send(
+              JSON.stringify({
+                type: "auth_ack",
+                success: false,
+                message: "Invalid credentials.",
+              })
+            );
+            return;
+          }
+
+          const { deviceId: receivedDeviceId, secret_key } =
+            parsedMessage.payload;
+          console.log(
+            `🔑 Authenticating Display for device: ${receivedDeviceId}`
           );
+
+          // ✅ Check device authentication
+          const isValid = await verifyDeviceSecretKey(
+            receivedDeviceId,
+            secret_key
+          );
+          if (isValid) {
+            isAuthenticated = true;
+            deviceId = receivedDeviceId;
+            connectedDisplays.set(deviceId, ws); // Store connection under device ID
+            console.log(`✅ Display authenticated for meter: ${deviceId}`);
+            ws.send(JSON.stringify({ type: "auth_ack", success: true }));
+          } else {
+            console.warn(`❌ Authentication failed for display: ${deviceId}`);
+            ws.send(
+              JSON.stringify({
+                type: "auth_ack",
+                success: false,
+                message: "Invalid credentials.",
+              })
+            );
+            ws.close();
+          }
+          return;
+        }
+
+        // ✅ Message Handling After Authentication
+        if (!isAuthenticated) {
+          console.warn("❌ Unauthorized device tried sending a message!");
           ws.send(
             JSON.stringify({
-              type: "auth_ack",
-              success: false,
-              message: "Invalid credentials.",
+              type: "error",
+              message: "Unauthorized. Please authenticate first.",
             })
           );
           return;
         }
 
-        const { deviceId: receivedDeviceId, secret_key } =
-          parsedMessage.payload;
-        console.log(
-          `🔑 Authenticating Display for device: ${receivedDeviceId}`
-        );
+        // ✅ Handle `meter_update` messages properly
+        if (parsedMessage.type === "meter_update") {
+          console.log(
+            `🔄 Meter update received for ${deviceId}:`,
+            parsedMessage
+          );
 
-        // ✅ Check device authentication
-        const isValid = await verifyDeviceSecretKey(
-          receivedDeviceId,
-          secret_key
-        );
-        if (isValid) {
-          isAuthenticated = true;
-          deviceId = receivedDeviceId;
-          connectedDisplays.set(deviceId, ws); // Store connection under device ID
-          console.log(`✅ Display authenticated for meter: ${deviceId}`);
-          ws.send(JSON.stringify({ type: "auth_ack", success: true }));
-        } else {
-          console.warn(`❌ Authentication failed for display: ${deviceId}`);
+          // ✅ Send update to the respective ESP32 display
+          sendUpdateToDisplay(deviceId, {
+            deviceId,
+            type: "meter_update",
+            timestamp: new Date().toISOString(),
+          });
+
           ws.send(
             JSON.stringify({
-              type: "auth_ack",
-              success: false,
-              message: "Invalid credentials.",
+              type: "ack",
+              success: true,
+              message: "Meter update processed.",
             })
           );
-          ws.close();
+          return;
         }
-        return;
+
+        // ✅ Handle `valve_control_response` messages
+        if (parsedMessage.type === "valve_control_response") {
+          console.log(
+            `🚰 Valve control update received for ${deviceId}:`,
+            parsedMessage
+          );
+
+          sendUpdateToDisplay(deviceId, {
+            deviceId,
+            type: "valve_control_response",
+            payload: parsedMessage.payload,
+            timestamp: new Date().toISOString(),
+          });
+
+          ws.send(
+            JSON.stringify({
+              type: "ack",
+              success: true,
+              message: "Valve update processed.",
+            })
+          );
+          return;
+        }
+
+        console.warn("⚠️ Unrecognized message type:", parsedMessage.type);
+        ws.send(
+          JSON.stringify({ type: "error", message: "Invalid message type." })
+        );
       } catch (error) {
-        console.error("⚠️ Invalid WebSocket message (ignored):", message);
+        console.error(
+          "⚠️ Invalid WebSocket message (ignored):",
+          message,
+          "Error:",
+          error.message
+        );
       }
     });
 
@@ -100,9 +172,10 @@ export const startDisplayWebSocketServer = (port) => {
  */
 export const sendUpdateToDisplay = (deviceId, updateData) => {
   const ws = connectedDisplays.get(deviceId);
+  console.log("📡 Active display connections:", connectedDisplays.size);
   if (ws && ws.readyState === ws.OPEN) {
     console.log(`📢 Sending update to display for meter: ${deviceId}`);
-    ws.send(JSON.stringify({ type: "meter_update", payload: updateData }));
+    ws.send(JSON.stringify(updateData));
   } else {
     console.warn(
       `⚠️ No active display connection found for meter: ${deviceId}`
