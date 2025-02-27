@@ -26,10 +26,12 @@ COPY --from=builder /app /app
 RUN bun add -g pm2
 
 # Expose the port
-EXPOSE 6767
+EXPOSE 6767 6868
 
 # Set environment variables
 ENV PORT=6767
+ENV NODE_ENV=production
+ENV DISPLAY_WS_PORT=6868
 
 # Start the app using PM2
 CMD ["pm2-runtime", "start", "pm2.config.js"]
