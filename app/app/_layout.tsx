@@ -56,7 +56,7 @@ export default function RootLayout() {
         {/* Main screen */}
         <Stack.Screen
           name="main"
-          options={{ title: "Main", headerShown: true }}
+          options={{ title: "Main", headerShown: false }}
         />
       </Stack>
       <StatusBar style="auto" />
