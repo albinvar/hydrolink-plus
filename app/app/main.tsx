@@ -18,6 +18,10 @@ import FlowRateCard from "~/components/FlowMeterWidget";
 import FlowMeterWidget from "~/components/FlowMeterWidget";
 import ValveToggleCard from "~/components/ValveToggleCard";
 import WaterQualityCard from "~/components/WaterQualityCard";
+import LeakDetectionCard from "~/components/LeakDetectionCard";
+import AiForecastChip from "~/components/AiForecastChip";
+import NotificationFeed from "~/components/LiveNotificationPopups";
+import MeterConnectionCard from "~/components/MeterConnectionCard";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -89,11 +93,28 @@ export default function Dashboard() {
 
       <FlowMeterWidget />
       {/* Usage Card */}
-      <UsageCard value={134.7} unit="L" label="Today’s Usage" />
+      {/* <UsageCard value={134.7} unit="L" label="Today’s Usage" /> */}
+
+      <LeakDetectionCard />
 
       <ValveToggleCard dailyLimit={200} usedToday={134.7} />
 
       <WaterQualityCard />
+
+      <MeterConnectionCard />
+
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {/* <Text style={{ fontSize: 16, fontWeight: "600", color: "#333" }}>
+          Today's Forecast
+        </Text>
+        <AiForecastChip /> */}
+      </View>
     </ScrollView>
   );
 }

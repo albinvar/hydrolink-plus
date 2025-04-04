@@ -9,11 +9,14 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { Platform } from "react-native";
 
+// Force splash screen until fonts load
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -24,42 +27,27 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!loaded) return null;
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* Splash screen */}
-        <Stack.Screen name="splash" options={{ headerShown: false }} />
-        {/* Login screen */}
-        <Stack.Screen
-          name="login"
-          options={{ title: "Login", headerShown: true }}
-        />
-        {/* Sign-Up screen */}
-        <Stack.Screen
-          name="signup"
-          options={{ title: "Sign Up", headerShown: true }}
-        />
-        {/* Sign-Up QR screen */}
-        <Stack.Screen
-          name="signup-qr"
-          options={{ title: "Scan QR", headerShown: true }}
-        />
-        {/* Linking Process screen */}
-        <Stack.Screen
-          name="linking-process"
-          options={{ title: "Linking Process", headerShown: true }}
-        />
-        {/* Main screen */}
-        <Stack.Screen
-          name="main"
-          options={{ title: "Main", headerShown: false }}
-        />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "fade", // smooth screen transitions
+        }}
+      >
+        {/* Splash */}
+        <Stack.Screen name="splash" />
+        {/* Auth Flow */}
+        <Stack.Screen name="login" />
+        <Stack.Screen name="signup" />
+        <Stack.Screen name="signup-qr" />
+        <Stack.Screen name="linking-process" />
+        {/* Main App */}
+        <Stack.Screen name="main" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="light" backgroundColor="transparent" translucent />
     </ThemeProvider>
   );
 }

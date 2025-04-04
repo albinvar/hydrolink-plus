@@ -5,12 +5,17 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import Animated, { FadeInUp } from "react-native-reanimated";
 
-const windowWidth = Dimensions.get("window").width;
+const screenWidth = Dimensions.get("window").width;
 
 export default function SignupQR() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -19,15 +24,12 @@ export default function SignupQR() {
   const [permission, requestPermission] = useCameraPermissions();
   const router = useRouter();
 
-  if (!permission) {
-    return <View />;
-  }
-
+  if (!permission) return <View />;
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
+      <LinearGradient colors={["#2196F3", "#0D47A1"]} style={styles.container}>
         <Text style={styles.permissionText}>
-          We need your permission to use the camera
+          We need permission to access your camera.
         </Text>
         <TouchableOpacity
           onPress={requestPermission}
@@ -35,68 +37,128 @@ export default function SignupQR() {
         >
           <Text style={styles.permissionButtonText}>Grant Permission</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     );
   }
 
-  // Handle QR Code Scanned
   const handleQRCodeScanned = (data: string) => {
-    if (!isScanning) return; // Prevent duplicate scans
-
+    if (!isScanning) return;
     if (data.startsWith("hlp-met-")) {
-      setIsScanning(false); // Stop scanning
-      router.push({ pathname: "/linking-process", params: { meterId: data } }); // Navigate to linking page with the meter ID
+      setIsScanning(false);
+      router.push({ pathname: "/linking-process", params: { meterId: data } });
     } else {
-      setIsScanning(false); // Stop scanning temporarily
-      alert("Invalid QR Code: This is not a valid HydroLink Plus meter.");
-      setTimeout(() => setIsScanning(true), 2000); // Resume scanning after 2 seconds
+      setIsScanning(false);
+      alert("Invalid QR Code: Not a HydroLink Plus meter.");
+      setTimeout(() => setIsScanning(true), 2000);
     }
   };
 
   return (
-    <View style={styles.container}>
-      {/* Camera in a small box */}
-      <View style={styles.cameraBox}>
-        <CameraView
-          style={styles.camera}
-          facing={facing}
-          enableTorch={torchEnabled}
-          onBarcodeScanned={({ data }) => handleQRCodeScanned(data)} // Updated scanning logic
-          barcodeScannerSettings={{
-            barcodeTypes: ["qr"],
-          }}
-        />
-        {/* Torch Icon */}
-        <TouchableOpacity
-          style={styles.torchButton}
-          onPress={() => setTorchEnabled(!torchEnabled)}
-        >
-          <MaterialCommunityIcons
-            name={torchEnabled ? "flashlight-off" : "flashlight"}
-            size={28}
-            color="#FFFFFF"
-          />
-        </TouchableOpacity>
-      </View>
+    <LinearGradient colors={["#2196F3", "#0D47A1"]} style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Scan Your HLP Meter</Text>
+          <Text style={styles.subtitle}>
+            Point your camera at the QR code on your HydroLink Plus device.
+          </Text>
+        </View>
 
-      {/* Instructions */}
-      <View style={styles.instructionsContainer}>
-        <Text style={styles.instructionsTitle}>
-          Link Your HydroLink Plus Meter
-        </Text>
-        <Text style={styles.instructionsText}>
-          Align the QR code on your HLP Meter within the camera box above. Once
-          scanned successfully, your meter will be linked to your account.
-        </Text>
-        <TouchableOpacity
-          style={styles.flipButton}
-          onPress={() =>
-            setFacing((current) => (current === "back" ? "front" : "back"))
-          }
+        <View style={styles.cameraFrame}>
+          <CameraView
+            style={styles.camera}
+            facing={facing}
+            enableTorch={torchEnabled}
+            onBarcodeScanned={({ data }) => handleQRCodeScanned(data)}
+            barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+          />
+          <View style={styles.cameraOverlay} />
+        </View>
+
+        <View style={styles.actions}>
+          <BlurView intensity={50} tint="light" style={styles.controlBtn}>
+            <TouchableOpacity onPress={() => setTorchEnabled(!torchEnabled)}>
+              <MaterialCommunityIcons
+                name={torchEnabled ? "flashlight-off" : "flashlight"}
+                size={28}
+                color="#1565C0"
+              />
+            </TouchableOpacity>
+          </BlurView>
+          <BlurView intensity={50} tint="light" style={styles.controlBtn}>
+            <TouchableOpacity
+              onPress={() =>
+                setFacing((current) => (current === "back" ? "front" : "back"))
+              }
+            >
+              <MaterialCommunityIcons
+                name="camera-flip"
+                size={28}
+                color="#1565C0"
+              />
+            </TouchableOpacity>
+          </BlurView>
+        </View>
+
+        <Animated.View
+          entering={FadeInUp.delay(300)}
+          style={styles.instructionWrapper}
         >
-          <Text style={styles.flipButtonText}>Flip Camera</Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={styles.instructionHeader}>Scan Instructions</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.instructions}
+          >
+            <InstructionItem
+              icon="qrcode-scan"
+              iconColor="#E1F5FE"
+              title="Find the QR Code"
+              desc="Look on top or back of the meter for a QR label."
+            />
+            <InstructionItem
+              icon="gesture-tap-hold"
+              iconColor="#B3E5FC"
+              title="Hold Steady"
+              desc="Keep your phone 6–10 inches away. Stay still."
+            />
+            <InstructionItem
+              icon="weather-night"
+              iconColor="#90CAF9"
+              title="Use Flashlight"
+              desc="Use the torch if it's too dark to scan."
+            />
+            <InstructionItem
+              icon="wifi-off"
+              iconColor="#FF8A65"
+              title="Offline Mode"
+              desc="Scanning works offline, linking needs internet."
+            />
+          </ScrollView>
+        </Animated.View>
+      </ScrollView>
+    </LinearGradient>
+  );
+}
+
+function InstructionItem({
+  icon,
+  iconColor,
+  title,
+  desc,
+}: {
+  icon: string;
+  iconColor: string;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <View style={styles.card}>
+      <MaterialCommunityIcons name={icon} size={32} color={iconColor} />
+      <Text style={styles.cardTitle}>{title}</Text>
+      <Text style={styles.cardDesc}>{desc}</Text>
     </View>
   );
 }
@@ -104,76 +166,118 @@ export default function SignupQR() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#121212",
+  },
+  scrollContainer: {
+    paddingTop: Platform.OS === "android" ? 70 : 100,
+    paddingBottom: 50,
+    alignItems: "center",
   },
   permissionText: {
-    color: "#FFFFFF",
-    textAlign: "center",
+    color: "#E3F2FD",
     fontSize: 16,
+    textAlign: "center",
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   permissionButton: {
-    alignSelf: "center",
-    backgroundColor: "#4FC3F7",
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: "#42A5F5",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
   },
   permissionButtonText: {
-    color: "#FFFFFF",
+    color: "#ffffff",
+    fontWeight: "bold",
     fontSize: 16,
-    fontWeight: "600",
   },
-  cameraBox: {
-    width: windowWidth * 0.8, // 80% of screen width
-    height: windowWidth * 0.8, // Square box
-    alignSelf: "center",
-    marginTop: 40,
-    borderRadius: 16,
-    overflow: "hidden", // Ensure camera view is clipped to rounded corners
-    borderWidth: 2,
-    borderColor: "#4FC3F7",
-    position: "relative",
+  header: {
+    marginBottom: 30,
+    paddingHorizontal: 30,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#BBDEFB",
+    textAlign: "center",
+  },
+  cameraFrame: {
+    width: screenWidth * 0.8,
+    height: screenWidth * 0.8,
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 4,
+    borderColor: "#E3F2FD",
+    marginBottom: 30,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 8,
   },
   camera: {
     flex: 1,
+    width: "100%",
   },
-  torchButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+  cameraOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderColor: "#B3E5FC",
+    borderWidth: 4,
     borderRadius: 20,
-    padding: 10,
+    borderStyle: "dashed",
+    opacity: 0.15,
   },
-  instructionsContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: "center",
-  },
-  instructionsTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  instructionsText: {
-    color: "#B0BEC5",
-    fontSize: 16,
-    textAlign: "center",
-    lineHeight: 22,
+  actions: {
+    flexDirection: "row",
+    gap: 20,
     marginBottom: 20,
   },
-  flipButton: {
-    alignSelf: "center",
-    backgroundColor: "#4FC3F7",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+  controlBtn: {
+    borderRadius: 50,
+    padding: 14,
+    overflow: "hidden",
   },
-  flipButtonText: {
-    color: "#FFFFFF",
+  instructionWrapper: {
+    width: "100%",
+    paddingTop: 20,
+  },
+  instructionHeader: {
     fontSize: 16,
     fontWeight: "600",
+    color: "#E1F5FE",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  instructions: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  card: {
+    backgroundColor: "#ffffffcc",
+    borderRadius: 16,
+    padding: 16,
+    width: screenWidth * 0.7,
+    height: 170,
+    shadowColor: "#000000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    justifyContent: "flex-start",
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 10,
+    color: "#0D47A1",
+  },
+  cardDesc: {
+    fontSize: 14,
+    marginTop: 6,
+    color: "#444",
   },
 });
