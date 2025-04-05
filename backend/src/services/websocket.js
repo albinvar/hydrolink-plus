@@ -237,17 +237,31 @@ export const requestDeviceInfo = (deviceId) => {
   return new Promise((resolve, reject) => {
     const ws = getConnectedDevice(deviceId);
     if (!ws) {
+      console.error(`Device ${deviceId} not connected`);
       return reject(new Error(`Device ${deviceId} not connected`));
     }
 
-    // ✅ Store the callback so that `device_info_response` can resolve this promise
-    ws.pendingDeviceInfoCallback = resolve;
+    console.log(`Requesting device info from ${deviceId}...`);
 
-    ws.send(JSON.stringify({ type: "device_info_request" }));
+    // Set a callback on the WebSocket to be called when the info is received.
+    ws.pendingDeviceInfoCallback = (info) => {
+      console.log(
+        `Received device info for ${deviceId}: ${JSON.stringify(info)}`
+      );
+      resolve(info);
+    };
 
-    // Timeout after 5 seconds if no response
+    // Send the "get_device_info" command and log it.
+    const command = { type: "get_device_info" };
+    ws.send(JSON.stringify(command));
+    console.log(`Sent command to ${deviceId}: ${JSON.stringify(command)}`);
+
+    // Set a timeout to reject if no response is received within 5 seconds.
     setTimeout(() => {
       if (ws.pendingDeviceInfoCallback) {
+        console.error(
+          `Timeout: Device ${deviceId} did not respond to 'get_device_info' command`
+        );
         ws.pendingDeviceInfoCallback = null;
         reject(new Error(`Device ${deviceId} did not respond`));
       }

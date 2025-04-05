@@ -209,9 +209,10 @@ router.get("/devices/:deviceId/info", async (req, res) => {
   try {
     const { deviceId } = req.params;
 
-    // ✅ Debugging: Log active WebSocket connections
+    // Debugging: log active connections if needed
     console.log(`🔍 Active Devices:`, getActiveConnections());
 
+    // Request device info via WebSocket; note that it now sends "get_device_info"
     const deviceInfo = await requestDeviceInfo(deviceId);
     res.json(deviceInfo);
   } catch (error) {
