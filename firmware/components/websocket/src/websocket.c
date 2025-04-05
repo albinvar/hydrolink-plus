@@ -1,6 +1,7 @@
 #include "esp_websocket_client.h"
 #include "esp_log.h"
 #include "parson.h"
+#include "ota_update.h"
 #include "led_control.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -76,6 +77,39 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
                 const char *heartbeat_reply = "{\"type\":\"heartbeat_response\"}";
                 esp_websocket_client_send_text(client, heartbeat_reply, strlen(heartbeat_reply), portMAX_DELAY);
             }
+
+            // ✅ Handle OTA Command
+if (strstr((char *)data->data_ptr, "\"type\":\"ota\"")) {
+    led_set_status(LED_STATUS_OTA_IN_PROGRESS);
+    ESP_LOGI(TAG, "📦 Received OTA command");
+
+    // Parse incoming JSON
+    JSON_Value *root_val = json_parse_string((const char *)data->data_ptr);
+    if (!root_val) {
+        ESP_LOGE(TAG, "Failed to parse OTA JSON");
+        break;
+    }
+
+    JSON_Object *root_obj = json_value_get_object(root_val);
+    JSON_Object *payload = json_object_get_object(root_obj, "payload");
+
+    if (!payload) {
+        ESP_LOGE(TAG, "OTA payload missing");
+        json_value_free(root_val);
+        break;
+    }
+
+    const char *url = json_object_get_string(payload, "url");
+    if (url) {
+        ESP_LOGI(TAG, "🌐 Starting OTA from URL: %s", url);
+        ota_start(url);  // This will reboot if successful
+    } else {
+        ESP_LOGE(TAG, "OTA URL not provided in payload");
+    }
+
+    json_value_free(root_val);
+}
+
 
             // ✅ Handle Water Quality Requests
             if (strstr((char *)data->data_ptr, "\"type\":\"get_water_quality_results\"")) {

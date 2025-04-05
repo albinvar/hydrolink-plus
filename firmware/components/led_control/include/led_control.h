@@ -6,7 +6,8 @@
 typedef enum {
     LED_STATUS_WIFI_DISCONNECTED,
     LED_STATUS_WS_DISCONNECTED,
-    LED_STATUS_CONNECTED
+    LED_STATUS_CONNECTED,
+    LED_STATUS_OTA_IN_PROGRESS
 } led_status_t;
 
 void led_init(void);

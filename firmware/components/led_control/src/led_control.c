@@ -41,6 +41,14 @@ static void led_task(void *arg) {
                 vTaskDelay(pdMS_TO_TICKS(750));
                 break;
 
+            case LED_STATUS_OTA_IN_PROGRESS:
+    gpio_set_level(LED_GPIO_PIN, 1);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    gpio_set_level(LED_GPIO_PIN, 0);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    break;
+
+
             case LED_STATUS_CONNECTED:
                 gpio_set_level(LED_GPIO_PIN, 1);
                 vTaskDelay(pdMS_TO_TICKS(1000));  // Small delay to avoid CPU overload
