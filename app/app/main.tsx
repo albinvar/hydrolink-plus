@@ -22,6 +22,8 @@ import LeakDetectionCard from "~/components/LeakDetectionCard";
 import AiForecastChip from "~/components/AiForecastChip";
 import NotificationFeed from "~/components/LiveNotificationPopups";
 import MeterConnectionCard from "~/components/MeterConnectionCard";
+import FirmwareUpgradeWidget from "~/components/FirmwareUpgradeWidget";
+import { router } from "expo-router";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -102,6 +104,12 @@ export default function Dashboard() {
       <WaterQualityCard />
 
       <MeterConnectionCard />
+
+      <FirmwareUpgradeWidget
+        currentVersion="v1.0.2"
+        latestVersion="v1.1.0"
+        onUpgrade={() => router.push("/upgrade")} // 👈 Navigate to the new page
+      />
 
       <View
         style={{

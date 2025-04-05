@@ -44,6 +44,7 @@ export default function RootLayout() {
         <Stack.Screen name="signup" />
         <Stack.Screen name="signup-qr" />
         <Stack.Screen name="linking-process" />
+        <Stack.Screen name="upgrade" />
         {/* Main App */}
         <Stack.Screen name="main" />
       </Stack>
