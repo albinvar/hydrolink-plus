@@ -8,6 +8,12 @@
 #include "water_quality.h"
 #include "driver/gpio.h"  // ✅ Add GPIO Control
 
+// Manually include the missing headers:
+#include "esp_chip_info.h"
+#include "esp_flash.h"
+#include "esp_app_desc.h"
+#include "esp_idf_version.h"  // Required to call esp_get_idf_version()
+
 static const char *TAG = "WEBSOCKET";
 
 #define WEBSOCKET_URL "ws://hlp.albinvar.in"
@@ -21,7 +27,7 @@ static bool is_authenticated = false;
 /**
  * ✅ Initialize Valve GPIO
  */
-void valve_init() {
+void valve_init(void) {
     gpio_config_t io_conf = {
         .pin_bit_mask = (1ULL << VALVE_GPIO_PIN),
         .mode = GPIO_MODE_OUTPUT,
@@ -79,37 +85,36 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
             }
 
             // ✅ Handle OTA Command
-if (strstr((char *)data->data_ptr, "\"type\":\"ota\"")) {
-    led_set_status(LED_STATUS_OTA_IN_PROGRESS);
-    ESP_LOGI(TAG, "📦 Received OTA command");
+            if (strstr((char *)data->data_ptr, "\"type\":\"ota\"")) {
+                led_set_status(LED_STATUS_OTA_IN_PROGRESS);
+                ESP_LOGI(TAG, "📦 Received OTA command");
 
-    // Parse incoming JSON
-    JSON_Value *root_val = json_parse_string((const char *)data->data_ptr);
-    if (!root_val) {
-        ESP_LOGE(TAG, "Failed to parse OTA JSON");
-        break;
-    }
+                // Parse incoming JSON
+                JSON_Value *root_val = json_parse_string((const char *)data->data_ptr);
+                if (!root_val) {
+                    ESP_LOGE(TAG, "Failed to parse OTA JSON");
+                    break;
+                }
 
-    JSON_Object *root_obj = json_value_get_object(root_val);
-    JSON_Object *payload = json_object_get_object(root_obj, "payload");
+                JSON_Object *root_obj = json_value_get_object(root_val);
+                JSON_Object *payload = json_object_get_object(root_obj, "payload");
 
-    if (!payload) {
-        ESP_LOGE(TAG, "OTA payload missing");
-        json_value_free(root_val);
-        break;
-    }
+                if (!payload) {
+                    ESP_LOGE(TAG, "OTA payload missing");
+                    json_value_free(root_val);
+                    break;
+                }
 
-    const char *url = json_object_get_string(payload, "url");
-    if (url) {
-        ESP_LOGI(TAG, "🌐 Starting OTA from URL: %s", url);
-        ota_start(url);  // This will reboot if successful
-    } else {
-        ESP_LOGE(TAG, "OTA URL not provided in payload");
-    }
+                const char *url = json_object_get_string(payload, "url");
+                if (url) {
+                    ESP_LOGI(TAG, "🌐 Starting OTA from URL: %s", url);
+                    ota_start(url);  // This will reboot if successful
+                } else {
+                    ESP_LOGE(TAG, "OTA URL not provided in payload");
+                }
 
-    json_value_free(root_val);
-}
-
+                json_value_free(root_val);
+            }
 
             // ✅ Handle Water Quality Requests
             if (strstr((char *)data->data_ptr, "\"type\":\"get_water_quality_results\"")) {
@@ -124,40 +129,83 @@ if (strstr((char *)data->data_ptr, "\"type\":\"ota\"")) {
             // ✅ Handle Valve Control Commands
             if (strstr((char *)data->data_ptr, "\"type\":\"open_valve\"")) {
                 ESP_LOGI(TAG, "🚰 Received Command: OPEN VALVE");
-                gpio_set_level(VALVE_GPIO_PIN, 1); // ✅ Turn Valve ON
+                gpio_set_level(VALVE_GPIO_PIN, 1); // Turn Valve ON
 
-                // ✅ Send Confirmation Response
-    JSON_Value *response_value = json_value_init_object();
-    JSON_Object *response_object = json_value_get_object(response_value);
-    json_object_set_string(response_object, "type", "command_response");
-    json_object_set_string(response_object, "deviceId", DEVICE_ID);
-    json_object_set_string(response_object, "status", "Valve Opened");
+                // Send Confirmation Response
+                JSON_Value *response_value = json_value_init_object();
+                JSON_Object *response_object = json_value_get_object(response_value);
+                json_object_set_string(response_object, "type", "command_response");
+                json_object_set_string(response_object, "deviceId", DEVICE_ID);
+                json_object_set_string(response_object, "status", "Valve Opened");
 
-    char *response_message = json_serialize_to_string(response_value);
-    esp_websocket_client_send_text(client, response_message, strlen(response_message), portMAX_DELAY);
+                char *response_message = json_serialize_to_string(response_value);
+                esp_websocket_client_send_text(client, response_message, strlen(response_message), portMAX_DELAY);
 
-    json_free_serialized_string(response_message);
-    json_value_free(response_value);
+                json_free_serialized_string(response_message);
+                json_value_free(response_value);
             }
 
             if (strstr((char *)data->data_ptr, "\"type\":\"close_valve\"")) {
                 ESP_LOGI(TAG, "🚰 Received Command: CLOSE VALVE");
-                gpio_set_level(VALVE_GPIO_PIN, 0); // ✅ Turn Valve OFF
+                gpio_set_level(VALVE_GPIO_PIN, 0); // Turn Valve OFF
 
+                // Send Confirmation Response
+                JSON_Value *response_value = json_value_init_object();
+                JSON_Object *response_object = json_value_get_object(response_value);
+                json_object_set_string(response_object, "type", "command_response");
+                json_object_set_string(response_object, "deviceId", DEVICE_ID);
+                json_object_set_string(response_object, "status", "Valve Closed");
 
-                // ✅ Send Confirmation Response
-    JSON_Value *response_value = json_value_init_object();
-    JSON_Object *response_object = json_value_get_object(response_value);
-    json_object_set_string(response_object, "type", "command_response");
-    json_object_set_string(response_object, "deviceId", DEVICE_ID);
-    json_object_set_string(response_object, "status", "Valve Closed");
+                char *response_message = json_serialize_to_string(response_value);
+                esp_websocket_client_send_text(client, response_message, strlen(response_message), portMAX_DELAY);
 
-    char *response_message = json_serialize_to_string(response_value);
-    esp_websocket_client_send_text(client, response_message, strlen(response_message), portMAX_DELAY);
-
-    json_free_serialized_string(response_message);
-    json_value_free(response_value);
+                json_free_serialized_string(response_message);
+                json_value_free(response_value);
             }
+
+            // ✅ Handle "get_device_info" command to retrieve core details
+            if (strstr((char *)data->data_ptr, "\"type\":\"get_device_info\"")) {
+                ESP_LOGI(TAG, "📦 Received Command: GET DEVICE INFO");
+
+                esp_chip_info_t chip_info;
+                esp_chip_info(&chip_info);
+
+                uint32_t flash_size = 0;
+                esp_flash_get_size(NULL, &flash_size);
+
+                const esp_app_desc_t *app_desc = esp_app_get_description();
+
+                // Create a JSON object with a nested payload for device info
+                JSON_Value *info_value = json_value_init_object();
+                JSON_Object *info_obj = json_value_get_object(info_value);
+
+                // Set the response type
+                json_object_set_string(info_obj, "type", "device_info_response");
+
+                // Create a payload object with the device details
+                JSON_Value *payload_value = json_value_init_object();
+                JSON_Object *payload_obj = json_value_get_object(payload_value);
+
+                json_object_set_string(payload_obj, "deviceId", DEVICE_ID);
+                json_object_set_string(payload_obj, "chip_model", "ESP32");
+                json_object_set_number(payload_obj, "chip_revision", chip_info.revision);
+                json_object_set_number(payload_obj, "cores", chip_info.cores);
+                json_object_set_number(payload_obj, "flash_size_MB", flash_size / (1024 * 1024));
+                json_object_set_string(payload_obj, "idf_version", esp_get_idf_version());
+                json_object_set_string(payload_obj, "app_version", app_desc->version);
+
+                // Nest the payload inside the main object
+                json_object_set_value(info_obj, "payload", payload_value);
+
+                char *info_str = json_serialize_to_string(info_value);
+                ESP_LOGI(TAG, "Sending device info: %s", info_str);
+                esp_websocket_client_send_text(client, info_str, strlen(info_str), portMAX_DELAY);
+
+                json_free_serialized_string(info_str);
+                json_value_free(info_value);
+            }
+
+
             break;
 
         case WEBSOCKET_EVENT_DISCONNECTED:
@@ -182,7 +230,7 @@ if (strstr((char *)data->data_ptr, "\"type\":\"ota\"")) {
  * ✅ Initializes WebSocket client
  */
 void websocket_init(void) {
-    valve_init();  // ✅ Initialize valve GPIO
+    valve_init();  // Initialize valve GPIO
 
     esp_websocket_client_config_t websocket_cfg = {
         .uri = WEBSOCKET_URL,
@@ -193,4 +241,16 @@ void websocket_init(void) {
 
     ESP_LOGI(TAG, "🌐 Connecting to WebSocket server...");
     esp_websocket_client_start(client);
+}
+
+/**
+ * ✅ Broadcast a message over WebSocket
+ */
+void websocket_broadcast(const char *message) {
+    if (client != NULL && esp_websocket_client_is_connected(client)) {
+        esp_websocket_client_send_text(client, message, strlen(message), portMAX_DELAY);
+        ESP_LOGI(TAG, "📢 WebSocket broadcasted: %s", message);
+    } else {
+        ESP_LOGW(TAG, "⚠️ WebSocket not connected. Message not sent: %s", message);
+    }
 }

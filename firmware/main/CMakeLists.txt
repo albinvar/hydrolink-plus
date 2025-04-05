@@ -11,3 +11,6 @@ idf_component_register(
                     websocket         # Add WebSocket component dependency
                     water_quality     # Add Water Quality component dependency
 )
+
+set(PROJECT_VER "v0.1-${IDF_VER}-${GIT_COMMIT_HASH}")
+set(PROJECT_NAME "Hydro Link PLus")

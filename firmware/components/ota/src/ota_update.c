@@ -3,8 +3,23 @@
 #include "esp_system.h"
 #include "esp_https_ota.h"
 #include "led_control.h"
+#include "nvs_flash.h"
+#include "nvs.h"
 
 static const char *TAG = "OTA_UPDATE";
+
+// 🔁 Store flag in NVS for OTA success
+static void store_ota_success_flag() {
+    nvs_handle_t nvs;
+    if (nvs_open("ota_status", NVS_READWRITE, &nvs) == ESP_OK) {
+        nvs_set_u8(nvs, "ota_done", 1);
+        nvs_commit(nvs);
+        nvs_close(nvs);
+        ESP_LOGI(TAG, "✅ OTA success flag saved");
+    } else {
+        ESP_LOGE(TAG, "⚠️ Failed to open NVS to store OTA status");
+    }
+}
 
 void ota_start(const char *url) {
     ESP_LOGI(TAG, "🌐 Starting OTA update from URL: %s", url);
@@ -25,6 +40,7 @@ void ota_start(const char *url) {
     esp_err_t ret = esp_https_ota(&ota_config);
     if (ret == ESP_OK) {
         ESP_LOGI(TAG, "✅ OTA update successful. Rebooting...");
+        store_ota_success_flag(); // 🧠 Store flag before restart
         esp_restart();
     } else {
         ESP_LOGE(TAG, "❌ OTA update failed: %s", esp_err_to_name(ret));
