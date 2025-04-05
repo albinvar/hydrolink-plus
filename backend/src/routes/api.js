@@ -5,7 +5,7 @@ import { getActiveConnections } from "../services/connectedDevices.js";
 import { sendCommandToDevice } from "../services/websocket.js";
 import { requestWaterQualityResults } from "../services/websocket.js";
 import { controlValve } from "../services/websocket.js";
-
+import { triggerOTAUpdate } from "../services/websocketHandlers.js";
 const router = express.Router();
 
 /**
@@ -352,6 +352,54 @@ router.post("/devices/:deviceId/valve", async (req, res) => {
       `❌ Error controlling valve for ${req.params.deviceId}:`,
       error.message
     );
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/devices/{deviceId}/ota:
+ *   post:
+ *     summary: Trigger OTA update on an ESP32 device
+ *     description: Sends an OTA command with a firmware URL to a connected ESP32 via WebSocket.
+ *     parameters:
+ *       - in: path
+ *         name: deviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The device ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 example: "http://yourserver.com/firmware.bin"
+ *     responses:
+ *       200:
+ *         description: OTA command sent successfully
+ *       404:
+ *         description: Device not connected
+ *       500:
+ *         description: Error sending OTA command
+ */
+router.post("/devices/:deviceId/ota", async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: "OTA URL is required." });
+    }
+
+    const response = await triggerOTAUpdate(deviceId, url);
+    res.json(response);
+  } catch (error) {
+    console.error(`❌ OTA error for ${req.params.deviceId}:`, error.message);
     res.status(500).json({ error: error.message });
   }
 });

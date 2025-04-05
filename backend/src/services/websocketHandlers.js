@@ -1,5 +1,8 @@
 import { verifyDeviceSecretKey } from "./supabase.js";
-import { getConnectedDeviceId } from "./connectedDevices.js";
+import {
+  getConnectedDeviceId,
+  getConnectedDevice,
+} from "./connectedDevices.js"; // ✅ Now includes getConnectedDevice
 
 // Handle authentication
 export const handleAuthentication = async (deviceId, secret_key, ws) => {
@@ -54,4 +57,26 @@ export const handleWebSocketMessage = (ws, message) => {
       );
       break;
   }
+};
+
+export const triggerOTAUpdate = (deviceId, firmwareUrl) => {
+  return new Promise((resolve, reject) => {
+    const ws = getConnectedDevice(deviceId); // Already imported
+    if (!ws) {
+      return reject(new Error(`Device ${deviceId} not connected`));
+    }
+
+    console.log(`📦 Sending OTA command to ${deviceId}`);
+
+    ws.send(
+      JSON.stringify({
+        type: "ota",
+        payload: {
+          url: firmwareUrl,
+        },
+      })
+    );
+
+    resolve({ success: true, message: "OTA command sent" });
+  });
 };
