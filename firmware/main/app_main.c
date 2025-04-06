@@ -10,22 +10,6 @@
 
 static const char *TAG = "MAIN";
 
-// 🔁 Check and clear OTA flag
-static bool ota_was_successful_and_clear_flag() {
-    bool result = false;
-    nvs_handle_t nvs;
-    if (nvs_open("ota_status", NVS_READWRITE, &nvs) == ESP_OK) {
-        uint8_t ota_done = 0;
-        if (nvs_get_u8(nvs, "ota_done", &ota_done) == ESP_OK && ota_done == 1) {
-            result = true;
-            nvs_erase_key(nvs, "ota_done");
-            nvs_commit(nvs);
-            ESP_LOGI(TAG, "✅ OTA success flag was found and cleared");
-        }
-        nvs_close(nvs);
-    }
-    return result;
-}
 
 void app_main(void) {
     ESP_LOGI(TAG, "Starting HydroLink Plus...");
@@ -54,10 +38,4 @@ void app_main(void) {
 
     websocket_init();
     ESP_LOGI(TAG, "WebSocket client is running.");
-
-    // 📢 OTA success message (send once)
-    if (ota_was_successful_and_clear_flag()) {
-        websocket_broadcast("ota_success");
-        ESP_LOGI(TAG, "📢 OTA success message broadcasted");
-    }
 }

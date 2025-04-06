@@ -9,8 +9,8 @@
 #include "freertos/task.h"
 #include "water_quality.h"
 #include "driver/gpio.h"
-
-// Manually include missing headers
+#include "nvs.h"
+#include "nvs_flash.h"
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 #include "esp_app_desc.h"
@@ -48,6 +48,23 @@ void valve_init(void) {
     };
     gpio_config(&io_conf);
     gpio_set_level(VALVE_GPIO_PIN, 0); // Ensure valve is OFF at startup
+}
+
+// 🔁 Check and clear OTA flag
+static bool ota_was_successful_and_clear_flag() {
+    bool result = false;
+    nvs_handle_t nvs;
+    if (nvs_open("ota_status", NVS_READWRITE, &nvs) == ESP_OK) {
+        uint8_t ota_done = 0;
+        if (nvs_get_u8(nvs, "ota_done", &ota_done) == ESP_OK && ota_done == 1) {
+            result = true;
+            nvs_erase_key(nvs, "ota_done");
+            nvs_commit(nvs);
+            ESP_LOGI(TAG, "✅ OTA success flag was found and cleared");
+        }
+        nvs_close(nvs);
+    }
+    return result;
 }
 
 /**
@@ -195,6 +212,7 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
                     ESP_LOGI(TAG, "Duplicate get_device_info command; ignoring.");
                     break;
                 }
+
                 ESP_LOGI(TAG, "📦 Received Command: GET DEVICE INFO");
 
                 esp_chip_info_t chip_info;
@@ -211,6 +229,7 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
 
                 JSON_Value *payload_value = json_value_init_object();
                 JSON_Object *payload_obj = json_value_get_object(payload_value);
+
                 json_object_set_string(payload_obj, "deviceId", DEVICE_ID);
                 json_object_set_string(payload_obj, "chip_model", "ESP32");
                 json_object_set_number(payload_obj, "chip_revision", chip_info.revision);
@@ -219,13 +238,21 @@ static void websocket_event_handler(void *arg, esp_event_base_t event_base, int3
                 json_object_set_string(payload_obj, "idf_version", esp_get_idf_version());
                 json_object_set_string(payload_obj, "app_version", app_desc->version);
 
+                // ✅ Use helper to conditionally set `is_updated`
+                if (ota_was_successful_and_clear_flag()) {
+                    json_object_set_boolean(payload_obj, "is_updated", true);
+                    ESP_LOGI(TAG, "✅ OTA flag detected via helper, sending is_updated: true");
+                }
+
                 json_object_set_value(info_obj, "payload", payload_value);
                 char *info_str = json_serialize_to_string(info_value);
+
                 ESP_LOGI(TAG, "Sending device info: %s", info_str);
                 esp_websocket_client_send_text(client, info_str, strlen(info_str), portMAX_DELAY);
                 json_free_serialized_string(info_str);
                 json_value_free(info_value);
             }
+
             break;
 
         case WEBSOCKET_EVENT_DISCONNECTED:
