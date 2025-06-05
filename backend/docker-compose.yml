@@ -2,15 +2,20 @@ version: "3.8"
 
 services:
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: hydrolink_backend
     ports:
-      - "6767:6767"
+      - "6767:6767"       # Main app port
+      - "6868:6868"       # DISPLAY_WS_PORT (if used in your app)
     env_file:
       - .env
     restart: unless-stopped
     volumes:
-      - .:/app
+      - .:/app            # ⚠️ Only keep if you're actively developing
+      - /app/node_modules # Prevent host machine from overwriting Bun's modules
+      - /app/.bun         # Prevent Bun cache from being overridden
     networks:
       - hydrolink_network
 
