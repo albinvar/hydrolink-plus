@@ -43,7 +43,7 @@ export default function SignupQR() {
 
   const handleQRCodeScanned = (data: string) => {
     if (!isScanning) return;
-    if (data.startsWith("hlp-met-")) {
+    if (data.startsWith("HLP")) {
       setIsScanning(false);
       router.push({ pathname: "/linking-process", params: { meterId: data } });
     } else {

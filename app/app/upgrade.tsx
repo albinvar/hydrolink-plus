@@ -30,6 +30,7 @@ export default function UpgradeScreen() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [previousVersion, setPreviousVersion] = useState<string>("");
   const [isMeterOnline, setIsMeterOnline] = useState<boolean>(false);
 
   const meterId = "HLP001";
@@ -53,8 +54,9 @@ export default function UpgradeScreen() {
       );
       const json = await res.json();
       setDeviceInfo(json);
+      return json;
     } catch {
-      // Silent error
+      return null;
     }
   };
 
@@ -128,7 +130,14 @@ export default function UpgradeScreen() {
     }
 
     setStage("fetchingInfo");
-    await fetchDeviceInfo();
+    const initialInfo = await fetchDeviceInfo();
+    if (!initialInfo) {
+      setError("Failed to retrieve device info.");
+      setStage("failed");
+      Vibration.vibrate(300);
+      return;
+    }
+    setPreviousVersion(initialInfo.app_version);
 
     setStage("sendingOTA");
     const otaSuccess = await sendOtaCommand();
@@ -141,27 +150,41 @@ export default function UpgradeScreen() {
 
     setStage("waiting");
     setProgress(0);
+
     let retries = 0;
-    const maxRetries = 20;
+    const maxRetries = 30;
+
     const pollLoop = async () => {
       while (retries < maxRetries) {
         await delay(5000);
         const increment = Math.floor(Math.random() * 3) + 1;
         setProgress((prev) => Math.min(prev + increment, 99));
-        const isBackOnline = await checkMeterOnline();
-        if (isBackOnline) {
-          await fetchDeviceInfo();
-          setProgress(100);
-          setStage("done");
-          Vibration.vibrate(100);
-          return;
+
+        try {
+          const res = await fetch(
+            `http://hydrolinkplus.one/api/devices/${meterId}/info`
+          );
+          const json = await res.json();
+
+          if (json?.is_updated) {
+            setDeviceInfo(json);
+            setProgress(100);
+            setStage("done");
+            Vibration.vibrate(100);
+            return;
+          }
+        } catch {
+          // Ignore errors
         }
+
         retries++;
       }
-      setError("Upgrade timed out. Meter did not come back online.");
+
+      setError("Upgrade timed out. Device did not confirm OTA success.");
       setStage("failed");
       Vibration.vibrate(400);
     };
+
     pollLoop();
   };
 
@@ -223,28 +246,16 @@ export default function UpgradeScreen() {
         );
 
       case "checkingOnline":
-        return (
-          <Animated.View entering={SlideInDown} style={styles.centered}>
-            <ActivityIndicator size="large" color="#E3F2FD" />
-            <Text style={styles.title}>Checking Meter Online Status...</Text>
-            {renderStepDetail()}
-          </Animated.View>
-        );
-
       case "fetchingInfo":
-        return (
-          <Animated.View entering={SlideInDown} style={styles.centered}>
-            <ActivityIndicator size="large" color="#E3F2FD" />
-            <Text style={styles.title}>Fetching Device Info...</Text>
-            {renderStepDetail()}
-          </Animated.View>
-        );
-
       case "sendingOTA":
         return (
           <Animated.View entering={SlideInDown} style={styles.centered}>
             <ActivityIndicator size="large" color="#E3F2FD" />
-            <Text style={styles.title}>Sending OTA Command...</Text>
+            <Text style={styles.title}>
+              {stage === "checkingOnline" && "Checking Meter Online Status..."}
+              {stage === "fetchingInfo" && "Fetching Device Info..."}
+              {stage === "sendingOTA" && "Sending OTA Command..."}
+            </Text>
             {renderStepDetail()}
           </Animated.View>
         );
@@ -280,7 +291,9 @@ export default function UpgradeScreen() {
             />
             <Text style={styles.title}>Upgrade Complete!</Text>
             <Text style={styles.description}>
-              Your meter firmware has been successfully updated.
+              Previous Version: {previousVersion}
+              {"\n"}
+              New Version: {deviceInfo?.app_version}
             </Text>
             {renderStepDetail()}
             <TouchableOpacity
